@@ -23,6 +23,9 @@ architecture RTL of testdesign is
   signal sevenseg_data : std_logic_vector(63 downto 0) := (0 => '1', others => '0');
   signal uart_rx_valid, uart_rx_error : std_logic;
   signal uart_rx_data : std_logic_vector(7 downto 0);
+  signal uart_tx_valid : std_logic := '0';
+  signal uart_tx_ready : std_logic;
+  signal uart_tx_data : std_logic_vector(7 downto 0);
 begin
   p : process(clk)
   begin
@@ -64,7 +67,8 @@ begin
 
   uart_inst: entity work.uart
     port map (clk, uart_rx, uart_tx,
-      uart_rx_valid, uart_rx_error, uart_rx_data);
+      uart_rx_valid, uart_rx_error, uart_rx_data,
+      uart_tx_valid, uart_tx_ready, uart_tx_data);
 
   sevenseg_display: sevenseg_flat
     generic map (digits => 8)
@@ -81,15 +85,31 @@ begin
       if to_integer(unsigned(cnt(22 downto 0))) = 0 and uart_index = -1 then
         sevenseg_data <= sevenseg_data(sevenseg_data'left-1 downto 0) & sevenseg_data(sevenseg_data'left);
       end if;
-      
+
+      uart_tx_valid <= '0';
+
+      if buttons(2)='0' then
+        uart_tx_valid <= '1';
+        uart_tx_data <= std_logic_vector(to_unsigned(48+2, 8));
+      end if;
+
       if buttons(3)='0' then
         sevenseg_data <= x"ffffffffffffffff";
+        uart_tx_valid <= '1';
+        uart_tx_data <= std_logic_vector(to_unsigned(48+3, 8));
       end if;
 
       if buttons(4)='0' then
         sevenseg_data <= x"8040201008040201";
+        uart_tx_valid <= '1';
+        uart_tx_data <= std_logic_vector(to_unsigned(48+4, 8));
       end if;
-      
+
+      if buttons(5)='0' then
+        uart_tx_valid <= '1';
+        uart_tx_data <= std_logic_vector(to_unsigned(48+5, 8));
+      end if;
+
       if uart_rx_valid='1' then
         uart_index := 0;
         sevenseg_data <= sevenseg_data(sevenseg_data'left-16 downto 0) & (7 downto 0 => uart_rx_error) & uart_rx_data;
