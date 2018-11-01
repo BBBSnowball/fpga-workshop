@@ -28,8 +28,45 @@ begin
       cnt <= std_logic_vector(unsigned(cnt)+1);
     end if;
   end process;
-  
-  leds <= cnt(cnt'high downto cnt'high-leds'length+1);
+
+  gen_leds: process(clk)
+    variable led1 : integer := 6;
+    variable led2 : integer := 5;
+    variable led3 : integer := 4;
+    variable led4 : integer := 3;
+  begin
+    if rising_edge(clk) then
+      if to_integer(unsigned(cnt(22 downto 0))) = 0 and buttons(3)='1' then
+        if led1 < leds'high then
+          led1 := led1 + 1;
+        else
+          led1 := leds'low;
+        end if;
+        if led1 > leds'low then
+          led2 := led1 - 1;
+        else
+          led2 := leds'high;
+        end if;
+        if led2 > leds'low then
+          led3 := led2 - 1;
+        else
+          led3 := leds'high;
+        end if;
+        if led3 > leds'low then
+          led4 := led3 - 1;
+        else
+          led4 := leds'high;
+        end if;
+      end if;
+      
+      leds <= (others => '1');
+      leds(led1) <= '0';
+      leds(led2) <= cnt(15);
+      leds(led3) <= cnt(15) or cnt(14);
+      leds(led4) <= cnt(16) or cnt(15) or cnt(14) or cnt(13);
+    end if;
+  end process;
+
   bell <= 'Z' when buttons(2) = '1'
     else cnt(25); -- button(2) is '0' if button is pressed
 
