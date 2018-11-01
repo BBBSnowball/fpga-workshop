@@ -80,6 +80,7 @@ begin
     );
   gen_sevenseg: process(clk)
     variable uart_index : integer := -1;
+    variable button5_string_index : integer := 0;
   begin
     if rising_edge(clk) then
       if to_integer(unsigned(cnt(22 downto 0))) = 0 and uart_index = -1 then
@@ -107,7 +108,29 @@ begin
 
       if buttons(5)='0' then
         uart_tx_valid <= '1';
-        uart_tx_data <= std_logic_vector(to_unsigned(48+5, 8));
+        case button5_string_index is
+          when  0 => uart_tx_data <= x"48";
+          when  1 => uart_tx_data <= x"65";
+          when  2 => uart_tx_data <= x"6c";
+          when  3 => uart_tx_data <= x"6c";
+          when  4 => uart_tx_data <= x"6f";
+          when  5 => uart_tx_data <= x"20";
+          when  6 => uart_tx_data <= x"57";
+          when  7 => uart_tx_data <= x"6f";
+          when  8 => uart_tx_data <= x"72";
+          when  9 => uart_tx_data <= x"6c";
+          when 10 => uart_tx_data <= x"64";
+          when 11 => uart_tx_data <= x"21";
+          when 12 => uart_tx_data <= x"0d";
+          when 13 => uart_tx_data <= x"0a";
+          when others => uart_tx_valid <= '0';
+        end case;
+        if uart_tx_valid='1' and uart_tx_ready='1' and button5_string_index < 14 then
+          button5_string_index := button5_string_index + 1;
+          uart_tx_valid <= '0';  -- uart_tx_data is old so reset valid
+        end if;
+      else
+        button5_string_index := 0;
       end if;
 
       if uart_rx_valid='1' then
