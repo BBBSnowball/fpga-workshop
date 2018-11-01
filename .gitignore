@@ -1,2 +1,11 @@
+# temp files of editor
 .*.swp
 *~
+
+# generated files in Quartus project
+output_files/
+db/
+incremental_db/
+
+# others
+*.bak
