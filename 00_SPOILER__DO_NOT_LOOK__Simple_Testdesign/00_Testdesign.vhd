@@ -30,40 +30,30 @@ begin
   end process;
 
   gen_leds: process(clk)
-    variable led1 : integer := 6;
-    variable led2 : integer := 5;
-    variable led3 : integer := 4;
-    variable led4 : integer := 3;
+    type intarray is array (integer range <>) of integer;
+    --constant ledmapping : intarray(15 downto 0) := (6, 7, 8, -1, 9, 10, 11, -1, 12, 13, 14, -1, 3, 4, 5, -1);
+    --constant ledmapping : intarray(15 downto 0) := (8, 7, 6, -1, 5, 4, 3, -1, 14, 13, 12, -1, 11, 10, 9, -1);
+    constant ledmapping : intarray(11 downto 0) := (8, 7, 6, 5, 4, 3, 14, 13, 12, 11, 10, 9);
+    variable ledstates : intarray(ledmapping'range) := (1, 1, 2, 3, 4, 5, others => 0);
   begin
     if rising_edge(clk) then
-      if to_integer(unsigned(cnt(22 downto 0))) = 0 and buttons(3)='1' then
-        if led1 < leds'high then
-          led1 := led1 + 1;
-        else
-          led1 := leds'low;
-        end if;
-        if led1 > leds'low then
-          led2 := led1 - 1;
-        else
-          led2 := leds'high;
-        end if;
-        if led2 > leds'low then
-          led3 := led2 - 1;
-        else
-          led3 := leds'high;
-        end if;
-        if led3 > leds'low then
-          led4 := led3 - 1;
-        else
-          led4 := leds'high;
-        end if;
+      if to_integer(unsigned(cnt(21 downto 0))) = 0 and buttons(3)='1' then
+        ledstates := ledstates(ledstates'left-1 downto 0) & ledstates(ledstates'left);
       end if;
-      
+
       leds <= (others => '1');
-      leds(led1) <= '0';
-      leds(led2) <= cnt(15);
-      leds(led3) <= cnt(15) or cnt(14);
-      leds(led4) <= cnt(16) or cnt(15) or cnt(14) or cnt(13);
+      for i in ledmapping'range loop
+        if ledmapping(i) >= 0 then
+          case ledstates(i) is
+            when 1 => leds(ledmapping(i)) <= '0';
+            when 2 => leds(ledmapping(i)) <= cnt(15);
+            when 3 => leds(ledmapping(i)) <= cnt(15) or cnt(14);
+            when 4 => leds(ledmapping(i)) <= cnt(16) or cnt(15) or cnt(14) or cnt(13);
+            when 5 => leds(ledmapping(i)) <= cnt(17) or cnt(16) or cnt(15) or cnt(14) or cnt(13) or cnt(12);
+            when others => leds(ledmapping(i)) <= '1';
+          end case;
+        end if;
+      end loop;
     end if;
   end process;
 
