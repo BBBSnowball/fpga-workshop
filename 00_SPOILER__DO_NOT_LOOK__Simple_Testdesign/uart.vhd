@@ -20,7 +20,7 @@ architecture RTL of uart is
   signal state : tSTATE := fsmWAIT_IDLE;
   signal clkcnt : unsigned(integer(ceil(log2(real(clkdiv)))) downto 0) := (others => '0');
   signal bitcnt : unsigned(3 downto 0) := (others => '0');
-  signal rxdata : std_logic_vector(10 downto 0) := (others => '0');
+  signal rxshift : std_logic_vector(9 downto 0) := (others => '0');
   signal rxs1, rxs2, rxs : std_logic;
 begin
   tx <= 'Z';
@@ -58,11 +58,10 @@ begin
           if clkcnt(clkcnt'left)='1' then
             clkcnt <= to_unsigned(2**clkcnt'left - (clkdiv-1), clkcnt'length);
             bitcnt <= bitcnt + 1;
-            rxdata <= rxs & rxdata(rxdata'left downto 1);
+            rxshift <= rxs & rxshift(rxshift'left downto 1);
             if to_integer(bitcnt)+1 = 1+8+2 then
               rx_valid <= '1';
-              --rx_error <= rxdata(0) or not(rxdata(9)) or not(rxdata(10));
-              rx_error <= rxdata(1) or not(rxdata(10)) or not(rxs);
+              rx_error <= rxshift(1) or not(rxs);
               if rxs='1' then
                 state <= fsmWAIT_START;
               else
@@ -75,5 +74,5 @@ begin
     end if;
   end process;
   
-  rx_data <= rxdata(8 downto 1);
+  rx_data <= rxshift(8 downto 1);
 end architecture;
