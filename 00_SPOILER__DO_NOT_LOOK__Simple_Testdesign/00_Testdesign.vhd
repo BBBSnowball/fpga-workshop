@@ -36,10 +36,12 @@ begin
 
   gen_leds: process(clk)
     type intarray is array (integer range <>) of integer;
+    subtype ledstate is integer range 0 to 5;
+    type ledstatearray is array (integer range <>) of ledstate;
     --constant ledmapping : intarray(15 downto 0) := (6, 7, 8, -1, 9, 10, 11, -1, 12, 13, 14, -1, 3, 4, 5, -1);
     --constant ledmapping : intarray(15 downto 0) := (8, 7, 6, -1, 5, 4, 3, -1, 14, 13, 12, -1, 11, 10, 9, -1);
     constant ledmapping : intarray(11 downto 0) := (8, 7, 6, 5, 4, 3, 14, 13, 12, 11, 10, 9);
-    variable ledstates : intarray(ledmapping'range) := (1, 1, 2, 3, 4, 5, others => 0);
+    variable ledstates : ledstatearray(ledmapping'range) := (1, 1, 2, 3, 4, 5, others => 0);
   begin
     if rising_edge(clk) then
       if to_integer(unsigned(cnt(21 downto 0))) = 0 and buttons(3)='1' then
@@ -80,7 +82,8 @@ begin
     );
   gen_sevenseg: process(clk)
     variable uart_index : integer := -1;
-    variable button5_string_index : integer := 0;
+    subtype tIndex is integer range 0 to 14;
+    variable button5_string_index : tIndex := 0;
   begin
     if rising_edge(clk) then
       if to_integer(unsigned(cnt(22 downto 0))) = 0 and uart_index = -1 then
