@@ -99,8 +99,8 @@ set_location_assignment PIN_65 -to switches[5]
 set_location_assignment PIN_66 -to switches[6]
 set_location_assignment PIN_67 -to switches[7]
 set_location_assignment PIN_68 -to switches[8]
-set_location_assignment PIN_113 -to uart_rx
-set_location_assignment PIN_114 -to uart_tx
+set_location_assignment PIN_114 -to uart_rx
+set_location_assignment PIN_113 -to uart_tx
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to bell
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to buttons[2]
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to buttons[3]
@@ -175,4 +175,5 @@ set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to sevense
 set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to sevenseg_segment[0]
 set_instance_assignment -name CURRENT_STRENGTH_NEW 2MA -to uart_tx
 set_global_assignment -name VHDL_FILE sevenseg.vhd
+set_global_assignment -name VHDL_FILE uart.vhd
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

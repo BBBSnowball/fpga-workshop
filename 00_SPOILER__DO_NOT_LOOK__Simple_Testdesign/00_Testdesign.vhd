@@ -19,8 +19,10 @@ entity testdesign is
 end entity testdesign;
 
 architecture RTL of testdesign is
-  signal cnt : std_logic_vector(35 downto 0);
+  signal cnt : std_logic_vector(35 downto 0) := (others => '0');
   signal sevenseg_data : std_logic_vector(63 downto 0) := (0 => '1', others => '0');
+  signal uart_rx_valid, uart_rx_error : std_logic;
+  signal uart_rx_data : std_logic_vector(7 downto 0);
 begin
   p : process(clk)
   begin
@@ -60,10 +62,9 @@ begin
   bell <= 'Z' when buttons(2) = '1'
     else cnt(25); -- button(2) is '0' if button is pressed
 
-  uart_tx <= 'Z';
-
-  --sevenseg_segment <= (0 => '0', 1 => '0', others => 'Z');
-  --sevenseg_digit   <= (0 => '0', others => 'Z');
+  uart_inst: entity work.uart
+    port map (clk, uart_rx, uart_tx,
+      uart_rx_valid, uart_rx_error, uart_rx_data);
 
   sevenseg_display: sevenseg_flat
     generic map (digits => 8)
@@ -74,9 +75,10 @@ begin
       sevenseg_digit => sevenseg_digit
     );
   gen_sevenseg: process(clk)
+    variable uart_index : integer := -1;
   begin
     if rising_edge(clk) then
-      if to_integer(unsigned(cnt(22 downto 0))) = 0 then
+      if to_integer(unsigned(cnt(22 downto 0))) = 0 and uart_index = -1 then
         sevenseg_data <= sevenseg_data(sevenseg_data'left-1 downto 0) & sevenseg_data(sevenseg_data'left);
       end if;
       
@@ -86,6 +88,11 @@ begin
 
       if buttons(4)='0' then
         sevenseg_data <= x"8040201008040201";
+      end if;
+      
+      if uart_rx_valid='1' then
+        uart_index := 0;
+        sevenseg_data <= sevenseg_data(sevenseg_data'left-16 downto 0) & (7 downto 0 => uart_rx_error) & uart_rx_data;
       end if;
     end if;
   end process;
