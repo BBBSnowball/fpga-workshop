@@ -1,0 +1,121 @@
+General stuff
+=============
+
+- git with all files
+- Encode different types of projects in the directory name, e.g. "SPOILER"
+  for things they should do without looking at the solution.
+
+
+FPGA Designs
+============
+
+TODO 00: Testdesign für das Board
+  - Lauflicht auf den 7-seg und so; Button->LED; evtl RS232
+  - Projekt als "SPOILER", Bitstream im Oberverzeichnis
+  - Zweck: Im Vorfeld: Triviales Design herunterladen und auf das Board spielen (Tools und Board testen), ModelSim und NIOS SDK mal starten. Im Prinzip reicht ein einfaches Taster->LED.
+  - learnt: how to connect and program the board
+
+TODO 15: Schematic design with simple logic
+  - Should be schematic to avoid any problems with VHDL, for now.
+  - DIP-Switch -> LED
+  - mode: present&repeat
+  - learnt: usage of Synthesis, Pin Assignment, Netlist Viewer
+TODO 16: Simple extension task
+  - User should add a simple extension to the schematic.
+  - What would be a good task?
+  - I can probably just let them play with it.
+
+TODO 40: Same logic in VHDL
+  - present&repeat
+
+TODO 45: Simple extension task (again; this time in VHDL)
+  - Should be a different task.
+
+TODO 55: LED blink
+  - As simple as possible. The design I made together with Manuel should be fine.
+  - mode: present&repeat
+
+TODO 60: Design mit mehreren Modulen
+  (gelernt: modulares Design in VHDL)
+  - Modul für Ansteuerung von LED-Anzeigen zur Verfügung stellen und muss nur eingebaut werden. Eventuell mit ein paar Generics, wenn sinnvoll.
+  - Anzeigewert statisch oder mit DIP-Switch beeinflussbar schreibt jeder selbst.
+  - mode: present&repeat
+
+TODO 65: Simulation mit ModelSim
+  (gelernt: VHDL Testbench, Bedienung von ModelSim)
+  - Design mit blinkender LED und LED-Anzeigen - dann kann man sich beides ansehen.
+  - Testbench only provides clocks.
+  - mode: present&repeat
+
+
+Presentation
+============
+
+TODO find a good tool, e.g. Markdown->HTML or LaTeX
+
+TODO 05: grobe Einordnung von FPGA zwischen MCU und ASIC
+
+TODO 10: sehr kurze Einführung in boolsche Logik, d.h. AND, OR, etc.
+  - Wahrheitstabelle von AND, OR, NOT
+  - Wahrheitstabelle von Addierer im Zehnersystem:
+    - Aufgabe: Addierer für einstellige Zahlen / Ziffern
+    - Als Pivot-Tabelle damit nicht zu groß.
+    - Zwei Tabellen - Ergebnis und Übertrag
+    - Aber beide Stellen in beiden hinschreiben und nur passend markieren
+  - Addierer kombinieren - analog zu schriftlichem Addieren
+  - Addierer binär zeigen, ggf gemeinsam entwickeln
+
+TODO 20: Wie wird Logik im FPGA umgesetzt?
+  - Explain LUTs. That's probably it.
+
+TODO 30: Kombinatorische Logik mit VHDL, kurzer Vortrag dann selbst umsetzen
+  - learnt: VHDL basics
+
+TODO 35: Cheat-Sheet für VHDL schreiben oder finden
+  - Should contain a suitable template of an entity and architecture.
+
+TODO 50: Erklärung von FPGA anhand von kombinatorische Logik und LED (langsam) blinken lassen
+  (gelernt: Register-Transfer-Logik, Signal-Tap (Logic Analyzer))
+  - gemeinsam RTL-Schematic anschauen und verstehen (Was tut er? Takt. Warum ist das mit dem Takt nötig?)
+  - in VHDL hinschreiben
+  - RTL-View und Netlist anschauen
+  - Constraint für den Takt einbauen
+  - Modus: am Beamer, jeder macht nach
+
+
+
+Rest der Notizen -> muss ich noch einsortieren
+==============================================
+
+- Design mit Statemachine
+  (gelernt: einfaches Design mit Statemachine -> genug für eigene, kleine Projekte)
+  - trivial: LED togglen bei Taster
+  - dann mit Debounce (warten bis sich nicht mehr ändert für ein paar ms)
+
+- Metastabilität
+  (gelernt: Metastabilität, Synchronizer, PLL)
+  - Metastabilität provozieren: mehrere Debouncer am selben Button, LED-Anzeige zählt ohne Debounce (d.h. zählt die Bounces) und leuchtet komplett wenn gedrückt
+  - Fmax reporten und über PLL einstellen.
+  - Modus: jeder macht zuerst selbst; Timing-Report und PLL am Beamer
+  - Komisches Verhalten? -> Synchronizer einbauen
+
+- Soft-Prozessor (NIOS) mit Peripherie
+  (gelernt: Benutzung von fertigem IP, Bedienung von Qsys/Platform-Designer, Benutzung der Software-IDE (NIOS SDK), Debugging)
+  - UART könnte man nutzen, aber braucht auch wieder Kabel.
+  - JTAG-UART könnte man aber einbauen. TODO: Schauen, ob das gut geht.
+  - PIO-Core für die LEDs
+  - PLL für blinkende LED (wenn möglich) -> nicht so richtig sinnvoll, aber dann hat man es zumindest mal gesehen ;-)
+  - Modus: am Beamer, jeder macht nach
+
+- Eigene Peripherie an den Soft-Prozessor
+  - Die LED-Anzeigen würden sich anbieten.
+  - Modus: Basics am Beamer, dann selbst weiter
+  - Basics: Avalon-Bus aus Qsys rausführen, Schreib-Zugriff aus Debugger machen, im Signal-Tap anschauen
+  - Design und ggf Testbench macht jeder selbst.
+  - Das wird sicher nicht bei allen an dem Tag fertig - sofern wird überhaupt auch nur annähernd bis dahin kommen :-D
+
+- Wenn noch Zeit ist, eine komplexere Statemachine.
+   - Aktuelle Tendenz geht zu WS2812. Das könnte man auch modular machen,  d.h. ein Modul generiert Pixeldaten, ein anderes macht sie passend für  WS2812, dazwischen AXI-Handshake.
+  - Eventuell schreibe ich eine Testbench für das WS2812-Modul.
+  - Modus: selbst machen
+
