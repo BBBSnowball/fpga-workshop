@@ -9,13 +9,13 @@ General stuff
 FPGA Designs
 ============
 
-TODO 00: Testdesign für das Board
+DONE 00: Testdesign für das Board
   - Lauflicht auf den 7-seg und so; Button->LED; evtl RS232
   - Projekt als "SPOILER", Bitstream im Oberverzeichnis
   - Zweck: Im Vorfeld: Triviales Design herunterladen und auf das Board spielen (Tools und Board testen), ModelSim und NIOS SDK mal starten. Im Prinzip reicht ein einfaches Taster->LED.
   - learnt: how to connect and program the board
 
-TODO 15: Schematic design with simple logic
+DONE 15: Schematic design with simple logic
   - Should be schematic to avoid any problems with VHDL, for now.
   - DIP-Switch -> LED
   - mode: present&repeat
@@ -25,15 +25,17 @@ TODO 16: Simple extension task
   - What would be a good task?
   - I can probably just let them play with it.
 
-TODO 40: Same logic in VHDL
+DONE 40: Same logic in VHDL
   - present&repeat
+  - test project is also SimpleSchematic
 
 TODO 45: Simple extension task (again; this time in VHDL)
   - Should be a different task.
 
-TODO 55: LED blink
+DONE 55: LED blink
   - As simple as possible. The design I made together with Manuel should be fine.
   - mode: present&repeat
+  - test project is also SimpleSchematic
 
 TODO 60: Design mit mehreren Modulen
   (gelernt: modulares Design in VHDL)
