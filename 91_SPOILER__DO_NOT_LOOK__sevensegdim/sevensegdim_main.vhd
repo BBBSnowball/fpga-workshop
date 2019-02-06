@@ -3,6 +3,8 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use ieee.math_real.all;
 
+use work.sevenseg_dim.all;
+
 entity top is
   port (
     clk : in std_logic;
@@ -12,60 +14,27 @@ entity top is
 end entity top;
 
 architecture RTL of top is
-  signal sevenseg_data : unsigned(8*8*8-1 downto 0);
-  signal cnt : unsigned(10 downto 0) := (others => '0');
+  signal sevenseg_data : tDIGITS_DATA(digits-1 downto 0);
+  signal cnt : unsigned(11 downto 0) := (others => '0');
   signal done : std_logic;
-
-  -- NOTE: This is not really gamma, but serves the same purpose.
-  -- see https://www.mikrocontroller.net/articles/LED-Fading#FAQ
-  constant gamma : real := 2.0; -- -1.0;
-  function apply_gamma(input : unsigned; len : integer) return unsigned is
-    constant max   : integer := 2**len-1;
-    constant steps : integer := 2**input'length-1;
-    constant b     : real    := (real(max)/gamma)**(1.0/(real(steps-1)));
-  begin
-    if input = (input'range => '0') then
-      return to_unsigned(0, len);
-    elsif gamma < 0.0 then
-      return input & to_unsigned(0, len-input'length);
-    else
-      return to_unsigned(integer(round(gamma * b ** real(to_integer(input)))), len);
-    end if;
-  end function;
-  type tGAMMA_TABLE is array(integer range <>) of unsigned(7 downto 0);
-  function init_gamma_table return tGAMMA_TABLE is
-    variable t : tGAMMA_TABLE(63 downto 0);
-  begin
-    for i in t'range loop
-      t(i) := apply_gamma(to_unsigned(i, 5), 8);
-    end loop;
-    return t;
-  end function;
-  signal gamma_table : tGAMMA_TABLE(63 downto 0) := init_gamma_table;
 begin
   sevenseg : entity work.sevenseg_array_dim
-    generic map (digits => 8, depth => 8)
     port map (clk => clk,
       sevenseg_data => sevenseg_data, sevenseg_segment => sevenseg_segment, sevenseg_digit => sevenseg_digit,
       done => done);
   
   gen : process(clk)
-    procedure set_digit(digit, segment : integer; data : unsigned(7 downto 0)) is
-    begin
-      sevenseg_data(digit*8*8+segment*8+8-1 downto digit*8*8+segment*8) <= data;
-    end procedure;
-
-    function xpos(digit, segment : integer) return integer is
+    function xpos_int(digit, segment : integer) return integer is
     begin
       case segment is
-        when 4 | 5     => return 0 + 4*(7-digit);
-        when 0 | 3 | 6 => return 1 + 4*(7-digit);
-        when 1 | 2     => return 2 + 4*(7-digit);
-        when others    => return 3 + 4*(7-digit);
+        when 4 | 5     => return 0 + 4*(digits-1-digit);
+        when 0 | 3 | 6 => return 1 + 4*(digits-1-digit);
+        when 1 | 2     => return 2 + 4*(digits-1-digit);
+        when others    => return 3 + 4*(digits-1-digit);
       end case;
     end function;
 
-    function ypos(digit, segment : integer) return integer is
+    function ypos_int(digit, segment : integer) return integer is
     begin
       case segment is
         when 0 => return 4;
@@ -79,14 +48,21 @@ begin
         when others => return 0;
       end case;
     end function;
+
+    function xpos(digit, segment : integer) return unsigned is
+    begin
+      return to_unsigned(xpos_int(digit, segment), 5);
+    end function;
+
+    function ypos(digit, segment : integer) return unsigned is
+    begin
+      return to_unsigned(ypos_int(digit, segment), 3);
+    end function;
   begin
     if rising_edge(clk) then
       for digit in 0 to 7 loop
         for segment in 0 to 7 loop
-          --set_digit(digit, segment, (to_unsigned(digit, 3) & to_unsigned(segment, 3) & "00") + cnt(cnt'left downto cnt'left-7));
-          --set_digit(digit, segment, to_unsigned(xpos(digit, segment)*256/32, 8));
-          --set_digit(digit, segment, apply_gamma(to_unsigned(xpos(digit, segment), 5), 8));
-          set_digit(digit, segment, gamma_table(xpos(digit, segment) + to_integer(cnt(cnt'left downto cnt'left-4))));
+          sevenseg_data(digit)(segment) <= xpos(digit, segment) + cnt(cnt'left downto cnt'left-5);
         end loop;
       end loop;
 
