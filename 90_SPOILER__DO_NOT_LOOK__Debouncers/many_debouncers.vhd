@@ -12,6 +12,7 @@ entity many_debouncers is
   port (
     clk, rst : in std_logic;
     input    : in std_logic;
+    dipswitch : in std_logic_vector(1 to 8);
     leds             : out std_logic_vector(3 to 14);
     sevenseg_segment : out std_logic_vector(7 downto 0);
     sevenseg_digit   : out std_logic_vector(7 downto 0)
@@ -86,11 +87,13 @@ begin
   end process;
 
   debouncers : for i in leds'range generate
-    signal x : std_logic;
+    signal x, y : std_logic;
   begin
+    y <= input xor dipswitch(i mod 8 + 1) xor dipswitch(i/8 mod 8 + 1);
+
     d : entity work.debounce
       generic map (debounce_time => debounce_time, clk_period => clk_period)
-      port map (clk => clk, rst => rst, input => input, output => x);
+      port map (clk => clk, rst => rst, input => y, output => x);
     
     t : entity work.toggle
       generic map (active_state => '0')
