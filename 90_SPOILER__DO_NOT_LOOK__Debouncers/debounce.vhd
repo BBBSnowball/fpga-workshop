@@ -67,6 +67,7 @@ begin
     elsif rising_edge(clk) then
       if counter(counter'left) = '1' then
         state <= input;
+        counter <= to_unsigned(2**debounce_bits - debounce_cycles, debounce_bits+1);
       elsif state = input then
         counter <= to_unsigned(2**debounce_bits - debounce_cycles, debounce_bits+1);
       else
