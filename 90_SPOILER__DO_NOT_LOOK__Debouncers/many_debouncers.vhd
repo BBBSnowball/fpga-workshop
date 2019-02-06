@@ -136,13 +136,12 @@ begin
       ring_cnt   <= (others => '0');
     elsif rising_edge(clk_ring) then
       ring_input <= input;
-      if input = '0' then
+      if input = '0' and to_integer(ring_cnt) = to_integer(unsigned(ring_state)) then
+        ring_state <= ring_state(ring_state'left+1 to ring_state'right) & ring_state(ring_state'left);
+      elsif input = '0' then
         ring_cnt <= ring_cnt + 1;
       else
         ring_cnt <= to_unsigned(to_integer(unsigned(ring_state)), ring_cnt'length);
-      end if;
-      if input = '0' and to_integer(ring_cnt) = to_integer(unsigned(ring_state)) then
-        ring_state <= ring_state(ring_state'left+1 to ring_state'right) & ring_state(ring_state'left);
       end if;
     end if;
   end process;
