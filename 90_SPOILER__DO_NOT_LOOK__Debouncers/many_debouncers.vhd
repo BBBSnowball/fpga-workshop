@@ -1,0 +1,99 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+use work.sevenseg.all;
+
+entity many_debouncers is
+  generic (
+    debounce_time : time := 10 ms;
+    clk_period    : time := 20 ns
+  );
+  port (
+    clk, rst : in std_logic;
+    input    : in std_logic;
+    leds             : out std_logic_vector(3 to 14);
+    sevenseg_segment : out std_logic_vector(7 downto 0);
+    sevenseg_digit   : out std_logic_vector(7 downto 0)
+  );
+end entity;
+
+architecture RTL of many_debouncers is
+  constant digits : integer := 8;
+  signal sevenseg_data : sevenseg_digits(digits-1 downto 0);
+  type tBCD_DIGITS is array(integer range <>) of unsigned(3 downto 0);
+  signal bcd_counter : tBCD_DIGITS(digits-1 downto 0) := (others => (others => '0'));
+  signal previous : std_logic := '1';
+  
+  function "+"(bcd : tBCD_DIGITS; inc : integer) return tBCD_DIGITS is
+    variable result : tBCD_DIGITS(bcd'range) := bcd;
+    variable inc2 : integer := inc;
+    variable tmp, tmp2 : unsigned(5 downto 0);
+  begin
+    for i in bcd'low to bcd'high loop
+      if inc2 = 0 then
+        exit;
+      else
+        tmp := result(i) + unsigned'("000000") + (inc2 mod 10);
+        tmp2 := tmp mod 10;
+        result(i) := tmp2(3 downto 0);
+        inc2 := inc2 / 10 + to_integer(tmp) / 10;
+      end if;
+    end loop;
+    return result;
+  end function;
+begin
+  sevenseg_display: sevenseg_array
+    generic map (digits => digits)
+    port map (
+      clk => clk,
+      sevenseg_data    => sevenseg_data,
+      sevenseg_segment => sevenseg_segment,
+      sevenseg_digit   => sevenseg_digit
+    );
+
+  count : process (rst, clk)
+  begin
+    if rst = '0' then
+      previous <= '1';
+      bcd_counter <= (others => (others => '0'));
+    elsif rising_edge(clk) then
+      previous <= input;
+      if previous /= input then
+        bcd_counter <= bcd_counter + 1;
+      end if;
+    end if;
+  end process;
+  
+  bcd_to_digits : process (bcd_counter)
+    constant to_digit : sevenseg_digits(0 to 15) := (
+      0 => x"3f",
+      1 => x"06",
+      2 => x"5b",
+      3 => x"4f",
+      4 => x"66",
+      5 => x"6d",
+      6 => x"7d",
+      7 => x"07",
+      8 => x"7f",
+      9 => x"6f",
+      others => x"40"
+    );
+  begin
+    for i in bcd_counter'range loop
+      sevenseg_data(i) <= to_digit(to_integer(bcd_counter(i)));
+    end loop;
+  end process;
+
+  debouncers : for i in leds'range generate
+    signal x : std_logic;
+  begin
+    d : entity work.debounce
+      generic map (debounce_time => debounce_time, clk_period => clk_period)
+      port map (clk => clk, rst => rst, input => input, output => x);
+    
+    t : entity work.toggle
+      generic map (active_state => '0')
+      port map (clk => clk, rst => rst, input => x, output => leds(i));
+  end generate;
+end architecture;

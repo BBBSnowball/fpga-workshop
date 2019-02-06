@@ -6,6 +6,8 @@
 output_files/
 db/
 incremental_db/
+greybox_tmp/
+*.qws
 # for simulation
 *.vho
 *.sdo
