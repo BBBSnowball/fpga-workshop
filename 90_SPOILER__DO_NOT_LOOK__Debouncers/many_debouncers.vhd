@@ -43,22 +43,43 @@ architecture RTL of many_debouncers is
     end loop;
     return result;
   end function;
+
+  component pll is
+      port (
+          clk_clk          : in  std_logic := 'X'; -- clk
+          clk_cnt_clk      : out std_logic;        -- clk
+          clk_debounce_clk : out std_logic;        -- clk
+          reset_reset_n    : in  std_logic := 'X'; -- reset_n
+          locked_export    : out std_logic         -- export
+      );
+  end component pll;
+
+  signal clk_cnt, clk_debounce, pll_locked : std_logic;
 begin
+  u0 : pll
+      port map (
+          clk_clk          => clk,
+          clk_cnt_clk      => clk_cnt,
+          clk_debounce_clk => clk_debounce,
+          reset_reset_n    => '1',
+          locked_export    => pll_locked
+      );
+
   sevenseg_display: sevenseg_array
     generic map (digits => digits)
     port map (
-      clk => clk,
+      clk => clk_cnt,
       sevenseg_data    => sevenseg_data,
       sevenseg_segment => sevenseg_segment,
       sevenseg_digit   => sevenseg_digit
     );
 
-  count : process (rst, clk)
+  count : process (rst, clk_cnt)
   begin
     if rst = '0' then
       previous <= '1';
       bcd_counter <= (others => (others => '0'));
-    elsif rising_edge(clk) then
+    elsif rising_edge(clk_cnt) then
       previous <= input;
       if previous /= input then
         bcd_counter <= bcd_counter + 1;
@@ -78,7 +99,7 @@ begin
       7 => x"07",
       8 => x"7f",
       9 => x"6f",
-      others => x"40"
+      others => x"80"
     );
   begin
     for i in bcd_counter'range loop
@@ -93,10 +114,10 @@ begin
 
     d : entity work.debounce
       generic map (debounce_time => debounce_time, clk_period => clk_period)
-      port map (clk => clk, rst => rst, input => y, output => x);
+      port map (clk => clk_debounce, rst => rst, input => y, output => x);
     
     t : entity work.toggle
       generic map (active_state => '0')
-      port map (clk => clk, rst => rst, input => x, output => leds(i));
+      port map (clk => clk_debounce, rst => rst, input => x, output => leds(i));
   end generate;
 end architecture;
