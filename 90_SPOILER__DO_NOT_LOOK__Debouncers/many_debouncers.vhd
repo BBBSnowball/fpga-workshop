@@ -57,6 +57,7 @@ architecture RTL of many_debouncers is
 
   signal clk_cnt, clk_debounce, clk_ring, pll_locked : std_logic;
   signal ring_state : std_logic_vector(leds'range);
+  signal ring_cnt   : unsigned(19 downto 0);
   signal ring_input : std_logic;
 begin
   u0 : pll
@@ -132,9 +133,13 @@ begin
   begin
     if rst = '0' or pll_locked = '0' then
       ring_state <= (ring_state'left => '0', others => '1');
+      ring_cnt   <= (others => '0');
     elsif rising_edge(clk_ring) then
       ring_input <= input;
       if input = '0' then
+        ring_cnt <= ring_cnt + 1;
+      end if;
+      if input = '0' and ring_cnt = 4242 then
         ring_state <= ring_state(ring_state'left+1 to ring_state'right) & ring_state(ring_state'left);
       end if;
     end if;
