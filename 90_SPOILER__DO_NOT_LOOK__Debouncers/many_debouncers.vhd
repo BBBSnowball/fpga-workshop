@@ -49,18 +49,22 @@ architecture RTL of many_debouncers is
           clk_clk          : in  std_logic := 'X'; -- clk
           clk_cnt_clk      : out std_logic;        -- clk
           clk_debounce_clk : out std_logic;        -- clk
+          clk_ring_clk     : out std_logic;        -- clk
           reset_reset_n    : in  std_logic := 'X'; -- reset_n
           locked_export    : out std_logic         -- export
       );
   end component pll;
 
-  signal clk_cnt, clk_debounce, pll_locked : std_logic;
+  signal clk_cnt, clk_debounce, clk_ring, pll_locked : std_logic;
+  signal ring_state : std_logic_vector(leds'range);
+  signal ring_input : std_logic;
 begin
   u0 : pll
       port map (
           clk_clk          => clk,
           clk_cnt_clk      => clk_cnt,
           clk_debounce_clk => clk_debounce,
+          clk_ring_clk     => clk_ring,
           reset_reset_n    => '1',
           locked_export    => pll_locked
       );
@@ -109,7 +113,7 @@ begin
   end process;
 
   debouncers : for i in leds'range generate
-    signal x, y : std_logic;
+    signal x, y, z : std_logic;
   begin
     y <= input xor dipswitch(i mod 8 + 1) xor dipswitch(i/8 mod 8 + 1);
 
@@ -119,6 +123,21 @@ begin
     
     t : entity work.toggle
       generic map (active_state => '0')
-      port map (clk => clk_debounce, rst => rst, input => x, output => leds(i));
+      port map (clk => clk_debounce, rst => rst, input => x, output => z);
+
+    --leds(i) <= z;
   end generate;
+
+  ring : process(rst, pll_locked, clk_ring)
+  begin
+    if rst = '0' or pll_locked = '0' then
+      ring_state <= (ring_state'left => '0', others => '1');
+    elsif rising_edge(clk_ring) then
+      ring_input <= input;
+      if input = '0' then
+        ring_state <= ring_state(ring_state'left+1 to ring_state'right) & ring_state(ring_state'left);
+      end if;
+    end if;
+  end process;
+  leds <= ring_state;
 end architecture;
