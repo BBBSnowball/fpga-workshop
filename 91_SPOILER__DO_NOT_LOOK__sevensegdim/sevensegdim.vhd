@@ -13,6 +13,7 @@ package sevenseg_dim is
   subtype tSEGMENT_DATA is unsigned(color_depth-1 downto 0);
   type tDIGIT_DATA is array(integer range <>) of tSEGMENT_DATA;
   type tDIGITS_DATA is array(integer range <>) of tDIGIT_DATA(segments_per_digit-1 downto 0);
+  type tDIGITS_BUFFER is array(integer range <>) of tDIGITS_DATA(digits-1 downto 0);
 
   -- NOTE: This is not really gamma, but serves the same purpose.
   -- see https://www.mikrocontroller.net/articles/LED-Fading#FAQ
