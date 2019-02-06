@@ -23,7 +23,7 @@ architecture RTL of many_debouncers is
   constant digits : integer := 8;
   signal sevenseg_data : sevenseg_digits(digits-1 downto 0);
   type tBCD_DIGITS is array(integer range <>) of unsigned(3 downto 0);
-  signal bcd_counter : tBCD_DIGITS(digits-1 downto 0) := (others => (others => '0'));
+  signal bcd_counter : tBCD_DIGITS(digits-1 downto 0);
   signal previous : std_logic := '1';
   
   function "+"(bcd : tBCD_DIGITS; inc : integer) return tBCD_DIGITS is
@@ -78,11 +78,12 @@ begin
   begin
     if rst = '0' then
       previous <= '1';
-      bcd_counter <= (others => (others => '0'));
+      bcd_counter <= (0 => "0010", 1 => "0100", others => (others => '0'));
     elsif rising_edge(clk_cnt) then
       previous <= input;
       if previous /= input then
-        bcd_counter <= bcd_counter + 1;
+        bcd_counter(3 downto 0) <= bcd_counter(3 downto 0) + 1;
+        bcd_counter(7 downto 4) <= bcd_counter(7 downto 4) + 1;
       end if;
     end if;
   end process;
