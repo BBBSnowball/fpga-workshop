@@ -32,6 +32,16 @@ architecture RTL of top is
       return to_unsigned(integer(round(gamma * b ** real(to_integer(input)))), len);
     end if;
   end function;
+  type tGAMMA_TABLE is array(integer range <>) of unsigned(7 downto 0);
+  function init_gamma_table return tGAMMA_TABLE is
+    variable t : tGAMMA_TABLE(63 downto 0);
+  begin
+    for i in t'range loop
+      t(i) := apply_gamma(to_unsigned(i, 5), 8);
+    end loop;
+    return t;
+  end function;
+  signal gamma_table : tGAMMA_TABLE(63 downto 0) := init_gamma_table;
 begin
   sevenseg : entity work.sevenseg_array_dim
     generic map (digits => 8, depth => 8)
@@ -75,8 +85,8 @@ begin
         for segment in 0 to 7 loop
           --set_digit(digit, segment, (to_unsigned(digit, 3) & to_unsigned(segment, 3) & "00") + cnt(cnt'left downto cnt'left-7));
           --set_digit(digit, segment, to_unsigned(xpos(digit, segment)*256/32, 8));
-          set_digit(digit, segment, apply_gamma(to_unsigned(xpos(digit, segment), 5), 8));
-          --set_digit(digit, segment, apply_gamma(to_unsigned(xpos(digit, segment), 5) + cnt(cnt'left downto cnt'left-4), 8));
+          --set_digit(digit, segment, apply_gamma(to_unsigned(xpos(digit, segment), 5), 8));
+          set_digit(digit, segment, gamma_table(xpos(digit, segment) + to_integer(cnt(cnt'left downto cnt'left-4))));
         end loop;
       end loop;
 
