@@ -11,7 +11,7 @@ package sevenseg is
       clk : in std_logic;
       sevenseg_data    : in  std_logic_vector(8*digits-1 downto 0);
       sevenseg_segment : out std_logic_vector(7 downto 0);
-      sevenseg_digit   : out std_logic_vector(7 downto 0)
+      sevenseg_digit   : out std_logic_vector(digits-1 downto 0)
     );
   end component;
 
@@ -26,7 +26,7 @@ package sevenseg is
       clk : in std_logic;
       sevenseg_data    : in  sevenseg_digits(digits-1 downto 0);
       sevenseg_segment : out std_logic_vector(7 downto 0);
-      sevenseg_digit   : out std_logic_vector(7 downto 0)
+      sevenseg_digit   : out std_logic_vector(digits-1 downto 0)
     );
   end component;
 end package;
@@ -47,7 +47,7 @@ entity sevenseg_flat is
     clk : in std_logic;
     sevenseg_data    : in  std_logic_vector(8*digits-1 downto 0);
     sevenseg_segment : out std_logic_vector(7 downto 0);
-    sevenseg_digit   : out std_logic_vector(7 downto 0)
+    sevenseg_digit   : out std_logic_vector(digits-1 downto 0)
   );
 end entity sevenseg_flat;
 
@@ -87,7 +87,7 @@ entity sevenseg_array is
     clk : in std_logic;
     sevenseg_data    : in  sevenseg_digits(digits-1 downto 0);
     sevenseg_segment : out std_logic_vector(7 downto 0);
-    sevenseg_digit   : out std_logic_vector(7 downto 0)
+    sevenseg_digit   : out std_logic_vector(digits-1 downto 0)
   );
 end entity sevenseg_array;
 
