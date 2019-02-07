@@ -1,6 +1,6 @@
 -- --------------------------------------------------------------------
 --
--- Copyright © 2008 by IEEE. All rights reserved.
+-- Copyright ï¿½ 2008 by IEEE. All rights reserved.
 --
 -- This source file is an essential part of IEEE Std 1076-2008,
 -- IEEE Standard VHDL Language Reference Manual. This source file may not be
@@ -37,12 +37,12 @@
 -- $Date: 2008-04-10 17:16:09 +0930 (Thu, 10 Apr 2008) $
 -- --------------------------------------------------------------------
 
-library IEEE;
+--library IEEE;
 
-package fixed_pkg is new IEEE.fixed_generic_pkg
-  generic map (
-    fixed_round_style    => IEEE.fixed_float_types.fixed_round,
-    fixed_overflow_style => IEEE.fixed_float_types.fixed_saturate,
-    fixed_guard_bits     => 3,
-    no_warning           => false
-    );
+--package fixed_pkg is new IEEE.fixed_generic_pkg
+--  generic map (
+--    fixed_round_style    => IEEE.fixed_float_types.fixed_round,
+--    fixed_overflow_style => IEEE.fixed_float_types.fixed_saturate,
+--    fixed_guard_bits     => 3,
+--    no_warning           => false
+--    );
