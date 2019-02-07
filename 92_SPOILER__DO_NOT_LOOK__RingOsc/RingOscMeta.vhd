@@ -5,10 +5,6 @@ use ieee.numeric_std.all;
 use work.sevenseg.all;
 
 entity RingOscMeta is
-  generic (
-    debounce_time : time := 10 ms;
-    clk_period    : time := 20 ns
-  );
   port (
     clk, rst : in std_logic;
     input    : in std_logic;
@@ -25,7 +21,8 @@ architecture RTL of RingOscMeta is
   type tBCD_DIGITS is array(integer range <>) of unsigned(3 downto 0);
   signal bcd_counter : tBCD_DIGITS(digits-1 downto 0);
   signal previous : std_logic := '1';
-  
+  signal bcd_counter_low : unsigned(22 downto 0);
+
   function "+"(bcd : tBCD_DIGITS; inc : integer) return tBCD_DIGITS is
     variable result : tBCD_DIGITS(bcd'range) := bcd;
     variable inc2 : integer := inc;
@@ -56,6 +53,7 @@ architecture RTL of RingOscMeta is
   end component pll;
 
   signal clk_cnt, clk_debounce, clk_ring, pll_locked : std_logic;
+  signal clk_ringosc : std_logic;
   signal ring_state : std_logic_vector(leds'range);
   signal ring_cnt   : unsigned(19 downto 0);
   signal ring_input : std_logic;
@@ -69,6 +67,9 @@ begin
           reset_reset_n    => '1',
           locked_export    => pll_locked
       );
+  
+  ringosc_inst : entity work.ringosc
+    port map (clk => clk_ringosc);
 
   sevenseg_display: sevenseg_array
     generic map (digits => digits)
@@ -84,11 +85,16 @@ begin
     if rst = '0' then
       previous <= '1';
       bcd_counter <= (0 => "0010", 1 => "0100", others => (others => '0'));
+      bcd_counter_low <= (others => '0');
     elsif rising_edge(clk_cnt) then
-      previous <= input;
-      if previous /= input then
-        bcd_counter(3 downto 0) <= bcd_counter(3 downto 0) + 1;
-        bcd_counter(7 downto 4) <= bcd_counter(7 downto 4) + 1;
+      previous <= clk_ringosc;
+      if previous /= clk_ringosc then
+        bcd_counter_low <= bcd_counter_low + 1;
+        if bcd_counter_low(bcd_counter_low'left) = '1' then
+          bcd_counter_low <= (others => '0');
+          bcd_counter(3 downto 0) <= bcd_counter(3 downto 0) + 1;
+          bcd_counter(7 downto 4) <= bcd_counter(7 downto 4) + 1;
+        end if;
       end if;
     end if;
   end process;
@@ -113,29 +119,13 @@ begin
     end loop;
   end process;
 
-  debouncers : for i in leds'range generate
-    signal x, y, z : std_logic;
-  begin
-    y <= input xor dipswitch(i mod 8 + 1) xor dipswitch(i/8 mod 8 + 1);
-
-    d : entity work.debounce
-      generic map (debounce_time => debounce_time, clk_period => clk_period)
-      port map (clk => clk_debounce, rst => rst, input => y, output => x);
-    
-    t : entity work.toggle
-      generic map (active_state => '0')
-      port map (clk => clk_debounce, rst => rst, input => x, output => z);
-
-    --leds(i) <= z;
-  end generate;
-
   ring : process(rst, pll_locked, clk_ring)
   begin
     if rst = '0' or pll_locked = '0' then
       ring_state <= (ring_state'left => '0', others => '1');
       ring_cnt   <= (others => '0');
     elsif rising_edge(clk_ring) then
-      ring_input <= input;
+      ring_input <= clk_ringosc;
       if ring_input = '0' and to_integer(ring_cnt) = to_integer(unsigned(ring_state)) then
         ring_state <= ring_state(ring_state'left+1 to ring_state'right) & ring_state(ring_state'left);
       elsif ring_input = '0' then
@@ -145,6 +135,6 @@ begin
       end if;
     end if;
   end process;
-  --ring_input <= input;
-  leds <= ring_state;
+  --ring_input <= clk_ringosc;
+  leds <= ring_state and "111111111111";
 end architecture;
