@@ -1,6 +1,6 @@
 -- --------------------------------------------------------------------
 --
--- Copyright ï¿½ 2008 by IEEE. All rights reserved.
+-- Copyright © 2008 by IEEE. All rights reserved.
 --
 -- This source file is an essential part of IEEE Std 1076-2008,
 -- IEEE Standard VHDL Language Reference Manual. This source file may not be
@@ -37,8 +37,6 @@
 -- $Date: 2008-04-10 17:16:09 +0930 (Thu, 10 Apr 2008) $
 -- --------------------------------------------------------------------
 
-library ieee;
-
 package fixed_float_types is
 
   -- Types used for generics of fixed_generic_pkg
@@ -56,12 +54,5 @@ package fixed_float_types is
                       round_inf,        -- Round toward positive infinity
                       round_neginf,     -- Round toward negative infinity
                       round_zero);      -- Round toward zero (truncate)
-
-
-  -- Quartus doesn't seem to support packages with generics, so we have to resort to this ugly solution.
-  constant fixed_overflow_style : fixed_overflow_style_type := fixed_saturate;
-  constant fixed_round_style    : fixed_round_style_type    := fixed_round;
-  constant fixed_guard_bits     : integer := 3;
-  constant no_warning           : boolean := false;
 
 end package fixed_float_types;

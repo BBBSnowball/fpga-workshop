@@ -1,6 +1,6 @@
 -- --------------------------------------------------------------------
 --
--- Copyright ï¿½ 2008 by IEEE. All rights reserved.
+-- Copyright © 2008 by IEEE. All rights reserved.
 --
 -- This source file is an essential part of IEEE Std 1076-2008,
 -- IEEE Standard VHDL Language Reference Manual. This source file may not be
@@ -38,9 +38,7 @@
 -- --------------------------------------------------------------------
 
 library IEEE;
-use ieee.std_logic_1164.all;
 use IEEE.MATH_REAL.all;
-use ieee.std_logic_misc.all;
 
 package body fixed_generic_pkg is
   -- Author David Bishop (dbishop@vhdl.org)
@@ -54,66 +52,6 @@ package body fixed_generic_pkg is
   -- or implemented as real numbers, set to "true" if synthesizable.
   constant fixedsynth_or_real : BOOLEAN := true;
 
-  function minimum (l, r : INTEGER)
-    return INTEGER is
-  begin  -- function minimum
-    if L < R then
-      return L;
-    else
-      return R;
-    end if;
-  end function minimum;
-
-  function maximum (l, r : INTEGER)
-    return INTEGER is
-  begin  -- function minimum
-    if L >= R then
-      return L;
-    else
-      return R;
-    end if;
-  end function maximum;
-
-  function minimum (l, r : signed)
-    return signed is
-  begin  --FIXME adjust width?
-    if L < R then
-      return L;
-    else
-      return R;
-    end if;
-  end function minimum;
-
-  function minimum (l, r : unsigned)
-    return unsigned is
-  begin  --FIXME adjust width?
-    if L < R then
-      return L;
-    else
-      return R;
-    end if;
-  end function minimum;
-
-  function maximum (l, r : signed)
-    return signed is
-  begin  --FIXME adjust width?
-    if L >= R then
-      return L;
-    else
-      return R;
-    end if;
-  end function maximum;
-
-  function maximum (l, r : unsigned)
-    return unsigned is
-  begin  --FIXME adjust width?
-    if L >= R then
-      return L;
-    else
-      return R;
-    end if;
-  end function maximum;
-
   -- Special version of "minimum" to do some boundary checking without errors
   function mins (l, r : INTEGER)
     return INTEGER is
@@ -121,12 +59,7 @@ package body fixed_generic_pkg is
     if (L = INTEGER'low or R = INTEGER'low) then
       return 0;                         -- error condition, silent
     end if;
-    --return minimum (L, R);
-    if L < R then
-      return L;
-    else
-      return R;
-    end if;
+    return minimum (L, R);
   end function mins;
 
   -- Special version of "minimum" to do some boundary checking with errors
@@ -139,12 +72,7 @@ package body fixed_generic_pkg is
         severity error;
       return 0;
     end if;
-    --return minimum (L, R);
-    if L < R then
-      return L;
-    else
-      return R;
-    end if;
+    return minimum (L, R);
   end function mine;
 
   -- The following functions are used only internally.  Every function
@@ -183,7 +111,7 @@ package body fixed_generic_pkg is
 
   -- Type convert a "unsigned" into a "ufixed", used internally
   function to_fixed (
-    arg                  : UNSIGNED;  -- shifted vector
+    arg                  : UNRESOLVED_UNSIGNED;  -- shifted vector
     constant left_index  : INTEGER;
     constant right_index : INTEGER)
     return UNRESOLVED_ufixed
@@ -196,7 +124,7 @@ package body fixed_generic_pkg is
 
   -- Type convert a "signed" into an "sfixed", used internally
   function to_fixed (
-    arg                  : SIGNED;  -- shifted vector
+    arg                  : UNRESOLVED_SIGNED;  -- shifted vector
     constant left_index  : INTEGER;
     constant right_index : INTEGER)
     return UNRESOLVED_sfixed
@@ -210,9 +138,9 @@ package body fixed_generic_pkg is
   -- Type convert a "ufixed" into an "unsigned", used internally
   function to_uns (
     arg : UNRESOLVED_ufixed)            -- fp vector
-    return UNSIGNED
+    return UNRESOLVED_UNSIGNED
   is
-    subtype t is UNSIGNED(arg'high - arg'low downto 0);
+    subtype t is UNRESOLVED_UNSIGNED(arg'high - arg'low downto 0);
     variable slv : t;
   begin  -- function to_uns
     slv := t(arg);
@@ -222,9 +150,9 @@ package body fixed_generic_pkg is
   -- Type convert an "sfixed" into a "signed", used internally
   function to_s (
     arg : UNRESOLVED_sfixed)            -- fp vector
-    return SIGNED
+    return UNRESOLVED_SIGNED
   is
-    subtype t is SIGNED(arg'high - arg'low downto 0);
+    subtype t is UNRESOLVED_SIGNED(arg'high - arg'low downto 0);
     variable slv : t;
   begin  -- function to_s
     slv := t(arg);
@@ -235,7 +163,7 @@ package body fixed_generic_pkg is
   procedure round_up (arg       : in  UNRESOLVED_ufixed;
                       result    : out UNRESOLVED_ufixed;
                       overflowx : out BOOLEAN) is
-    variable arguns, resuns : UNSIGNED (arg'high-arg'low+1 downto 0)
+    variable arguns, resuns : UNRESOLVED_UNSIGNED (arg'high-arg'low+1 downto 0)
       := (others => '0');
   begin  -- round_up
     arguns (arguns'high-1 downto 0) := to_uns (arg);
@@ -249,7 +177,7 @@ package body fixed_generic_pkg is
   procedure round_up (arg       : in  UNRESOLVED_sfixed;
                       result    : out UNRESOLVED_sfixed;
                       overflowx : out BOOLEAN) is
-    variable args, ress : SIGNED (arg'high-arg'low+1 downto 0);
+    variable args, ress : UNRESOLVED_SIGNED (arg'high-arg'low+1 downto 0);
   begin  -- round_up
     args (args'high-1 downto 0) := to_s (arg);
     args(args'high)             := arg(arg'high);  -- sign extend
@@ -257,7 +185,7 @@ package body fixed_generic_pkg is
     result := to_fixed(ress (ress'high-1
                              downto 0), arg'high, arg'low);
     overflowx := ((arg(arg'high) /= ress(ress'high-1))
-                  and (or_reduce (STD_ULOGIC_VECTOR(ress)) /= '0'));
+                  and (or (STD_ULOGIC_VECTOR(ress)) /= '0'));
   end procedure round_up;
 
   -- Rounding - Performs a "round_nearest" (IEEE 754) which rounds up
@@ -276,7 +204,7 @@ package body fixed_generic_pkg is
     if (remainder'length > 1) then
       if (remainder (remainder'high) = '1') then
         rounds := (arg(arg'low) = '1')
-                  or (or_reduce (to_sulv(remainder(remainder'high-1 downto
+                  or (or (to_sulv(remainder(remainder'high-1 downto
                                            remainder'low))) = '1');
       end if;
     else
@@ -309,7 +237,7 @@ package body fixed_generic_pkg is
     if (remainder'length > 1) then
       if (remainder (remainder'high) = '1') then
         rounds := (arg(arg'low) = '1')
-                  or (or_reduce (to_sulv(remainder(remainder'high-1 downto
+                  or (or (to_sulv(remainder(remainder'high-1 downto
                                            remainder'low))) = '1');
       end if;
     else
@@ -394,14 +322,14 @@ package body fixed_generic_pkg is
     arg : UNRESOLVED_ufixed)            -- fixed point vector
     return STD_LOGIC_VECTOR is
   begin
-    return STD_LOGIC_VECTOR(to_sulv(arg));
+    return to_sulv(arg);
   end function to_slv;
 
   function to_slv (
     arg : UNRESOLVED_sfixed)            -- fixed point vector
     return STD_LOGIC_VECTOR is
   begin
-    return STD_LOGIC_VECTOR(to_sulv(arg));
+    return to_sulv(arg);
   end function to_slv;
 
   function to_ufixed (
@@ -423,7 +351,7 @@ package body fixed_generic_pkg is
         severity error;
       return NAUF;
     else
-      result := to_fixed (arg         => UNSIGNED(arg),
+      result := to_fixed (arg         => UNRESOLVED_UNSIGNED(arg),
                           left_index  => left_index,
                           right_index => right_index);
       return result;
@@ -449,7 +377,7 @@ package body fixed_generic_pkg is
         severity error;
       return NASF;
     else
-      result := to_fixed (arg         => SIGNED(arg),
+      result := to_fixed (arg         => UNRESOLVED_SIGNED(arg),
                           left_index  => left_index,
                           right_index => right_index);
       return result;
@@ -464,7 +392,7 @@ package body fixed_generic_pkg is
   is
     constant left_index  : INTEGER := arg'high;
     constant right_index : INTEGER := mine(arg'low, arg'low);
-    variable ressns      : SIGNED (arg'length downto 0);
+    variable ressns      : UNRESOLVED_SIGNED (arg'length downto 0);
     variable result      : UNRESOLVED_sfixed (left_index+1 downto right_index);
   begin
     if (arg'length < 1 or result'length < 1) then
@@ -483,7 +411,7 @@ package body fixed_generic_pkg is
   is
     constant left_index  : INTEGER := arg'high+1;
     constant right_index : INTEGER := mine(arg'low, arg'low);
-    variable ressns      : SIGNED (arg'length downto 0);
+    variable ressns      : UNRESOLVED_SIGNED (arg'length downto 0);
     variable result      : UNRESOLVED_sfixed (left_index downto right_index);
   begin
     if (arg'length < 1 or result'length < 1) then
@@ -504,9 +432,9 @@ package body fixed_generic_pkg is
     constant right_index      : INTEGER := mine(l'low, r'low);
     variable lresize, rresize : UNRESOLVED_ufixed (left_index downto right_index);
     variable result           : UNRESOLVED_ufixed (left_index downto right_index);
-    variable lslv, rslv : UNSIGNED (left_index-right_index
+    variable lslv, rslv : UNRESOLVED_UNSIGNED (left_index-right_index
                                                downto 0);
-    variable result_slv : UNSIGNED (left_index-right_index
+    variable result_slv : UNRESOLVED_UNSIGNED (left_index-right_index
                                                downto 0);
   begin
     if (l'length < 1 or r'length < 1 or result'length < 1) then
@@ -529,8 +457,8 @@ package body fixed_generic_pkg is
     constant right_index      : INTEGER := mine(l'low, r'low);
     variable lresize, rresize : UNRESOLVED_sfixed (left_index downto right_index);
     variable result           : UNRESOLVED_sfixed (left_index downto right_index);
-    variable lslv, rslv       : SIGNED (left_index-right_index downto 0);
-    variable result_slv       : SIGNED (left_index-right_index downto 0);
+    variable lslv, rslv       : UNRESOLVED_SIGNED (left_index-right_index downto 0);
+    variable result_slv       : UNRESOLVED_SIGNED (left_index-right_index downto 0);
   begin
     if (l'length < 1 or r'length < 1 or result'length < 1) then
       return NASF;
@@ -553,9 +481,9 @@ package body fixed_generic_pkg is
     constant right_index      : INTEGER := mine(l'low, r'low);
     variable lresize, rresize : UNRESOLVED_ufixed (left_index downto right_index);
     variable result           : UNRESOLVED_ufixed (left_index downto right_index);
-    variable lslv, rslv : UNSIGNED (left_index-right_index
+    variable lslv, rslv : UNRESOLVED_UNSIGNED (left_index-right_index
                                                downto 0);
-    variable result_slv : UNSIGNED (left_index-right_index
+    variable result_slv : UNRESOLVED_UNSIGNED (left_index-right_index
                                                downto 0);
   begin
     if (l'length < 1 or r'length < 1 or result'length < 1) then
@@ -578,8 +506,8 @@ package body fixed_generic_pkg is
     constant right_index      : INTEGER := mine(l'low, r'low);
     variable lresize, rresize : UNRESOLVED_sfixed (left_index downto right_index);
     variable result           : UNRESOLVED_sfixed (left_index downto right_index);
-    variable lslv, rslv       : SIGNED (left_index-right_index downto 0);
-    variable result_slv       : SIGNED (left_index-right_index downto 0);
+    variable lslv, rslv       : UNRESOLVED_SIGNED (left_index-right_index downto 0);
+    variable result_slv       : UNRESOLVED_SIGNED (left_index-right_index downto 0);
   begin
     if (l'length < 1 or r'length < 1 or result'length < 1) then
       return NASF;
@@ -597,9 +525,9 @@ package body fixed_generic_pkg is
     l, r : UNRESOLVED_ufixed)    -- ufixed(a downto b) * ufixed(c downto d) =
     return UNRESOLVED_ufixed     -- ufixed(a+c+1 downto b+d)
   is
-    variable lslv       : UNSIGNED (l'length-1 downto 0);
-    variable rslv       : UNSIGNED (r'length-1 downto 0);
-    variable result_slv : UNSIGNED (r'length+l'length-1 downto 0);
+    variable lslv       : UNRESOLVED_UNSIGNED (l'length-1 downto 0);
+    variable rslv       : UNRESOLVED_UNSIGNED (r'length-1 downto 0);
+    variable result_slv : UNRESOLVED_UNSIGNED (r'length+l'length-1 downto 0);
     variable result     : UNRESOLVED_ufixed (l'high + r'high+1 downto
                                              mine(l'low, l'low) + mine(r'low, r'low));
   begin
@@ -618,9 +546,9 @@ package body fixed_generic_pkg is
     l, r : UNRESOLVED_sfixed)    -- sfixed(a downto b) * sfixed(c downto d) = 
     return UNRESOLVED_sfixed     -- sfixed(a+c+1 downto b+d)
   is
-    variable lslv       : SIGNED (l'length-1 downto 0);
-    variable rslv       : SIGNED (r'length-1 downto 0);
-    variable result_slv : SIGNED (r'length+l'length-1 downto 0);
+    variable lslv       : UNRESOLVED_SIGNED (l'length-1 downto 0);
+    variable rslv       : UNRESOLVED_SIGNED (r'length-1 downto 0);
+    variable result_slv : UNRESOLVED_SIGNED (r'length+l'length-1 downto 0);
     variable result     : UNRESOLVED_sfixed (l'high + r'high+1 downto
                                              mine(l'low, l'low) + mine(r'low, r'low));
   begin
@@ -661,9 +589,9 @@ package body fixed_generic_pkg is
                                          mine (l'low, l'low) - r'high -1);
     variable dresult    : UNRESOLVED_ufixed (result'high downto result'low -guard_bits);
     variable lresize    : UNRESOLVED_ufixed (l'high downto l'high - dresult'length+1);
-    variable lslv       : UNSIGNED (lresize'length-1 downto 0);
-    variable rslv       : UNSIGNED (r'length-1 downto 0);
-    variable result_slv : UNSIGNED (lresize'length-1 downto 0);
+    variable lslv       : UNRESOLVED_UNSIGNED (lresize'length-1 downto 0);
+    variable rslv       : UNRESOLVED_UNSIGNED (r'length-1 downto 0);
+    variable result_slv : UNRESOLVED_UNSIGNED (lresize'length-1 downto 0);
   begin
     if (l'length < 1 or r'length < 1 or
         mins(r'low, r'low) /= r'low or mins(l'low, l'low) /= l'low) then
@@ -703,9 +631,9 @@ package body fixed_generic_pkg is
                                              mine (l'low, l'low) - r'high);
     variable dresult    : UNRESOLVED_sfixed (result'high downto result'low-guard_bits);
     variable lresize    : UNRESOLVED_sfixed (l'high+1 downto l'high+1 -dresult'length+1);
-    variable lslv       : SIGNED (lresize'length-1 downto 0);
-    variable rslv       : SIGNED (r'length-1 downto 0);
-    variable result_slv : SIGNED (lresize'length-1 downto 0);
+    variable lslv       : UNRESOLVED_SIGNED (lresize'length-1 downto 0);
+    variable rslv       : UNRESOLVED_SIGNED (r'length-1 downto 0);
+    variable result_slv : UNRESOLVED_SIGNED (lresize'length-1 downto 0);
   begin
     if (l'length < 1 or r'length < 1 or
         mins(r'low, r'low) /= r'low or mins(l'low, l'low) /= l'low) then
@@ -804,9 +732,9 @@ package body fixed_generic_pkg is
                                              rlow-guard_bits);
     variable rresize    : UNRESOLVED_ufixed (r'high downto rlow-guard_bits);
     variable dresult    : UNRESOLVED_ufixed (rresize'range);
-    variable lslv       : UNSIGNED (lresize'length-1 downto 0);
-    variable rslv       : UNSIGNED (rresize'length-1 downto 0);
-    variable result_slv : UNSIGNED (rslv'range);
+    variable lslv       : UNRESOLVED_UNSIGNED (lresize'length-1 downto 0);
+    variable rslv       : UNRESOLVED_UNSIGNED (rresize'length-1 downto 0);
+    variable result_slv : UNRESOLVED_UNSIGNED (rslv'range);
   begin
     if (l'length < 1 or r'length < 1 or
         mins(r'low, r'low) /= r'low or mins(l'low, l'low) /= l'low) then
@@ -983,11 +911,11 @@ package body fixed_generic_pkg is
     constant left_index       : INTEGER := maximum(l'high, r'high)+1;
     constant right_index      : INTEGER := mins(l'low, r'low);
     variable lresize, rresize : UNRESOLVED_ufixed (left_index downto right_index);
-    variable lslv, rslv : UNSIGNED (left_index-right_index
+    variable lslv, rslv : UNRESOLVED_UNSIGNED (left_index-right_index
                                                downto 0);
-    variable result_slv : UNSIGNED (left_index-right_index
+    variable result_slv : UNRESOLVED_UNSIGNED (left_index-right_index
                                                downto 0);
-    variable cx : UNSIGNED (0 downto 0);  -- Carry in
+    variable cx : UNRESOLVED_UNSIGNED (0 downto 0);  -- Carry in
   begin
     if (l'length < 1 or r'length < 1) then
       result := NAUF;
@@ -1013,11 +941,11 @@ package body fixed_generic_pkg is
     constant left_index       : INTEGER := maximum(l'high, r'high)+1;
     constant right_index      : INTEGER := mins(l'low, r'low);
     variable lresize, rresize : UNRESOLVED_sfixed (left_index downto right_index);
-    variable lslv, rslv : SIGNED (left_index-right_index
+    variable lslv, rslv : UNRESOLVED_SIGNED (left_index-right_index
                                              downto 0);
-    variable result_slv : SIGNED (left_index-right_index
+    variable result_slv : UNRESOLVED_SIGNED (left_index-right_index
                                              downto 0);
-    variable cx : SIGNED (1 downto 0);  -- Carry in
+    variable cx : UNRESOLVED_SIGNED (1 downto 0);  -- Carry in
   begin
     if (l'length < 1 or r'length < 1) then
       result := NASF;
@@ -1051,7 +979,7 @@ package body fixed_generic_pkg is
     end if;
   end function scalb;
 
-  function scalb (y : UNRESOLVED_ufixed; N : SIGNED)
+  function scalb (y : UNRESOLVED_ufixed; N : UNRESOLVED_SIGNED)
     return UNRESOLVED_ufixed is
   begin
     return scalb (y => y,
@@ -1071,7 +999,7 @@ package body fixed_generic_pkg is
     end if;
   end function scalb;
 
-  function scalb (y : UNRESOLVED_sfixed; N : SIGNED)
+  function scalb (y : UNRESOLVED_sfixed; N : UNRESOLVED_SIGNED)
     return UNRESOLVED_sfixed is
   begin
     return scalb (y => y,
@@ -1134,7 +1062,7 @@ package body fixed_generic_pkg is
   function "sll" (ARG : UNRESOLVED_ufixed; COUNT : INTEGER)
     return UNRESOLVED_ufixed
   is
-    variable argslv : UNSIGNED (arg'length-1 downto 0);
+    variable argslv : UNRESOLVED_UNSIGNED (arg'length-1 downto 0);
     variable result : UNRESOLVED_ufixed (arg'range);
   begin
     argslv := to_uns (arg);
@@ -1146,7 +1074,7 @@ package body fixed_generic_pkg is
   function "srl" (ARG : UNRESOLVED_ufixed; COUNT : INTEGER)
     return UNRESOLVED_ufixed
   is
-    variable argslv : UNSIGNED (arg'length-1 downto 0);
+    variable argslv : UNRESOLVED_UNSIGNED (arg'length-1 downto 0);
     variable result : UNRESOLVED_ufixed (arg'range);
   begin
     argslv := to_uns (arg);
@@ -1158,7 +1086,7 @@ package body fixed_generic_pkg is
   function "rol" (ARG : UNRESOLVED_ufixed; COUNT : INTEGER)
     return UNRESOLVED_ufixed
   is
-    variable argslv : UNSIGNED (arg'length-1 downto 0);
+    variable argslv : UNRESOLVED_UNSIGNED (arg'length-1 downto 0);
     variable result : UNRESOLVED_ufixed (arg'range);
   begin
     argslv := to_uns (arg);
@@ -1170,7 +1098,7 @@ package body fixed_generic_pkg is
   function "ror" (ARG : UNRESOLVED_ufixed; COUNT : INTEGER)
     return UNRESOLVED_ufixed
   is
-    variable argslv : UNSIGNED (arg'length-1 downto 0);
+    variable argslv : UNRESOLVED_UNSIGNED (arg'length-1 downto 0);
     variable result : UNRESOLVED_ufixed (arg'range);
   begin
     argslv := to_uns (arg);
@@ -1182,7 +1110,7 @@ package body fixed_generic_pkg is
   function "sla" (ARG : UNRESOLVED_ufixed; COUNT : INTEGER)
     return UNRESOLVED_ufixed
   is
-    variable argslv : UNSIGNED (arg'length-1 downto 0);
+    variable argslv : UNRESOLVED_UNSIGNED (arg'length-1 downto 0);
     variable result : UNRESOLVED_ufixed (arg'range);
   begin
     argslv := to_uns (arg);
@@ -1195,7 +1123,7 @@ package body fixed_generic_pkg is
   function "sra" (ARG : UNRESOLVED_ufixed; COUNT : INTEGER)
     return UNRESOLVED_ufixed
   is
-    variable argslv : UNSIGNED (arg'length-1 downto 0);
+    variable argslv : UNRESOLVED_UNSIGNED (arg'length-1 downto 0);
     variable result : UNRESOLVED_ufixed (arg'range);
   begin
     argslv := to_uns (arg);
@@ -1208,7 +1136,7 @@ package body fixed_generic_pkg is
   function "sll" (ARG : UNRESOLVED_sfixed; COUNT : INTEGER)
     return UNRESOLVED_sfixed
   is
-    variable argslv : SIGNED (arg'length-1 downto 0);
+    variable argslv : UNRESOLVED_SIGNED (arg'length-1 downto 0);
     variable result : UNRESOLVED_sfixed (arg'range);
   begin
     argslv := to_s (arg);
@@ -1220,7 +1148,7 @@ package body fixed_generic_pkg is
   function "srl" (ARG : UNRESOLVED_sfixed; COUNT : INTEGER)
     return UNRESOLVED_sfixed
   is
-    variable argslv : SIGNED (arg'length-1 downto 0);
+    variable argslv : UNRESOLVED_SIGNED (arg'length-1 downto 0);
     variable result : UNRESOLVED_sfixed (arg'range);
   begin
     argslv := to_s (arg);
@@ -1232,7 +1160,7 @@ package body fixed_generic_pkg is
   function "rol" (ARG : UNRESOLVED_sfixed; COUNT : INTEGER)
     return UNRESOLVED_sfixed
   is
-    variable argslv : SIGNED (arg'length-1 downto 0);
+    variable argslv : UNRESOLVED_SIGNED (arg'length-1 downto 0);
     variable result : UNRESOLVED_sfixed (arg'range);
   begin
     argslv := to_s (arg);
@@ -1244,7 +1172,7 @@ package body fixed_generic_pkg is
   function "ror" (ARG : UNRESOLVED_sfixed; COUNT : INTEGER)
     return UNRESOLVED_sfixed
   is
-    variable argslv : SIGNED (arg'length-1 downto 0);
+    variable argslv : UNRESOLVED_SIGNED (arg'length-1 downto 0);
     variable result : UNRESOLVED_sfixed (arg'range);
   begin
     argslv := to_s (arg);
@@ -1253,26 +1181,10 @@ package body fixed_generic_pkg is
     return result;
   end function "ror";
 
-  function "sra" (ARG : SIGNED; COUNT : INTEGER)
-    return SIGNED
-  is
-  begin
-    --return signed(std_LOGIC_VECTOR(ARG) sra COUNT);
-    return signed (to_stdlogicvector(to_bitvector(std_logic_vector(ARG)) sra count));
-  end function "sra";
-
-  function "sra" (ARG : UNSIGNED; COUNT : INTEGER)
-    return UNSIGNED
-  is
-  begin
-    --return unsigned(std_LOGIC_VECTOR(ARG) sra COUNT);
-    return unsigned (to_stdlogicvector(to_bitvector(std_logic_vector(ARG)) sra count));
-  end function "sra";
-
   function "sla" (ARG : UNRESOLVED_sfixed; COUNT : INTEGER)
     return UNRESOLVED_sfixed
   is
-    variable argslv : SIGNED (arg'length-1 downto 0);
+    variable argslv : UNRESOLVED_SIGNED (arg'length-1 downto 0);
     variable result : UNRESOLVED_sfixed (arg'range);
   begin
     argslv := to_s (arg);
@@ -1289,7 +1201,7 @@ package body fixed_generic_pkg is
   function "sra" (ARG : UNRESOLVED_sfixed; COUNT : INTEGER)
     return UNRESOLVED_sfixed
   is
-    variable argslv : SIGNED (arg'length-1 downto 0);
+    variable argslv : UNRESOLVED_SIGNED (arg'length-1 downto 0);
     variable result : UNRESOLVED_sfixed (arg'range);
   begin
     argslv := to_s (arg);
@@ -1805,316 +1717,316 @@ package body fixed_generic_pkg is
   -- Reduction operators
   function "and" (l : UNRESOLVED_ufixed) return STD_ULOGIC is
   begin
-    return and_reduce(to_sulv(l));
+    return and to_sulv(l);
   end function "and";
 
   function "nand" (l : UNRESOLVED_ufixed) return STD_ULOGIC is
   begin
-    return nand_reduce(to_sulv(l));
+    return nand to_sulv(l);
   end function "nand";
 
   function "or" (l : UNRESOLVED_ufixed) return STD_ULOGIC is
   begin
-    return or_reduce(to_sulv(l));
+    return or to_sulv(l);
   end function "or";
 
   function "nor" (l : UNRESOLVED_ufixed) return STD_ULOGIC is
   begin
-    return nor_reduce(to_sulv(l));
+    return nor to_sulv(l);
   end function "nor";
 
   function "xor" (l : UNRESOLVED_ufixed) return STD_ULOGIC is
   begin
-    return xor_reduce(to_sulv(l));
+    return xor to_sulv(l);
   end function "xor";
 
   function "xnor" (l : UNRESOLVED_ufixed) return STD_ULOGIC is
   begin
-    return xnor_reduce(to_sulv(l));
+    return xnor to_sulv(l);
   end function "xnor";
 
   function "and" (l : UNRESOLVED_sfixed) return STD_ULOGIC is
   begin
-    return and_reduce(to_sulv(l));
+    return and to_sulv(l);
   end function "and";
 
   function "nand" (l : UNRESOLVED_sfixed) return STD_ULOGIC is
   begin
-    return nand_reduce(to_sulv(l));
+    return nand to_sulv(l);
   end function "nand";
 
   function "or" (l : UNRESOLVED_sfixed) return STD_ULOGIC is
   begin
-    return or_reduce(to_sulv(l));
+    return or to_sulv(l);
   end function "or";
 
   function "nor" (l : UNRESOLVED_sfixed) return STD_ULOGIC is
   begin
-    return nor_reduce(to_sulv(l));
+    return nor to_sulv(l);
   end function "nor";
 
   function "xor" (l : UNRESOLVED_sfixed) return STD_ULOGIC is
   begin
-    return xor_reduce(to_sulv(l));
+    return xor to_sulv(l);
   end function "xor";
 
   function "xnor" (l : UNRESOLVED_sfixed) return STD_ULOGIC is
   begin
-    return xnor_reduce(to_sulv(l));
+    return xnor to_sulv(l);
   end function "xnor";
   -- End reduction operators
 
---  function "?=" (L, R : UNRESOLVED_ufixed) return STD_ULOGIC is
---    constant left_index       : INTEGER := maximum(l'high, r'high);
---    constant right_index      : INTEGER := mins(l'low, r'low);
---    variable lresize, rresize : UNRESOLVED_ufixed (left_index downto right_index);
---    variable lslv, rslv       : UNSIGNED (lresize'length-1 downto 0);
---  begin  -- ?=
---    if ((L'length < 1) or (R'length < 1)) then
---      assert NO_WARNING
---        report fixed_generic_pkg'instance_name
---        & """?="": null detected, returning X"
---        severity warning;
---      return 'X';
---    else
---      lresize := resize (l, left_index, right_index);
---      rresize := resize (r, left_index, right_index);
---      lslv    := to_uns (lresize);
---      rslv    := to_uns (rresize);
---      return lslv ?= rslv;
---    end if;
---  end function "?=";
---
---  function "?/=" (L, R : UNRESOLVED_ufixed) return STD_ULOGIC is
---    constant left_index       : INTEGER := maximum(l'high, r'high);
---    constant right_index      : INTEGER := mins(l'low, r'low);
---    variable lresize, rresize : UNRESOLVED_ufixed (left_index downto right_index);
---    variable lslv, rslv       : UNSIGNED (lresize'length-1 downto 0);
---  begin  -- ?/=
---    if ((L'length < 1) or (R'length < 1)) then
---      assert NO_WARNING
---        report fixed_generic_pkg'instance_name
---        & """?/="": null detected, returning X"
---        severity warning;
---      return 'X';
---    else
---      lresize := resize (l, left_index, right_index);
---      rresize := resize (r, left_index, right_index);
---      lslv    := to_uns (lresize);
---      rslv    := to_uns (rresize);
---      return lslv ?/= rslv;
---    end if;
---  end function "?/=";
+  function "?=" (L, R : UNRESOLVED_ufixed) return STD_ULOGIC is
+    constant left_index       : INTEGER := maximum(l'high, r'high);
+    constant right_index      : INTEGER := mins(l'low, r'low);
+    variable lresize, rresize : UNRESOLVED_ufixed (left_index downto right_index);
+    variable lslv, rslv       : UNRESOLVED_UNSIGNED (lresize'length-1 downto 0);
+  begin  -- ?=
+    if ((L'length < 1) or (R'length < 1)) then
+      assert NO_WARNING
+        report fixed_generic_pkg'instance_name
+        & """?="": null detected, returning X"
+        severity warning;
+      return 'X';
+    else
+      lresize := resize (l, left_index, right_index);
+      rresize := resize (r, left_index, right_index);
+      lslv    := to_uns (lresize);
+      rslv    := to_uns (rresize);
+      return lslv ?= rslv;
+    end if;
+  end function "?=";
 
---  function "?>" (L, R : UNRESOLVED_ufixed) return STD_ULOGIC is
---    constant left_index       : INTEGER := maximum(l'high, r'high);
---    constant right_index      : INTEGER := mins(l'low, r'low);
---    variable lresize, rresize : UNRESOLVED_ufixed (left_index downto right_index);
---    variable lslv, rslv       : UNSIGNED (lresize'length-1 downto 0);
---  begin  -- ?>
---    if ((l'length < 1) or (r'length < 1)) then
---      assert NO_WARNING
---        report fixed_generic_pkg'instance_name
---        & """?>"": null detected, returning X"
---        severity warning;
---      return 'X';
---    else
---      lresize := resize (l, left_index, right_index);
---      rresize := resize (r, left_index, right_index);
---      lslv    := to_uns (lresize);
---      rslv    := to_uns (rresize);
---      return lslv ?> rslv;
---    end if;
---  end function "?>";
---
---  function "?>=" (L, R : UNRESOLVED_ufixed) return STD_ULOGIC is
---    constant left_index       : INTEGER := maximum(l'high, r'high);
---    constant right_index      : INTEGER := mins(l'low, r'low);
---    variable lresize, rresize : UNRESOLVED_ufixed (left_index downto right_index);
---    variable lslv, rslv       : UNSIGNED (lresize'length-1 downto 0);
---  begin  -- ?>=
---    if ((l'length < 1) or (r'length < 1)) then
---      assert NO_WARNING
---        report fixed_generic_pkg'instance_name
---        & """?>="": null detected, returning X"
---        severity warning;
---      return 'X';
---    else
---      lresize := resize (l, left_index, right_index);
---      rresize := resize (r, left_index, right_index);
---      lslv    := to_uns (lresize);
---      rslv    := to_uns (rresize);
---      return lslv ?>= rslv;
---    end if;
---  end function "?>=";
---
---  function "?<" (L, R : UNRESOLVED_ufixed) return STD_ULOGIC is
---    constant left_index       : INTEGER := maximum(l'high, r'high);
---    constant right_index      : INTEGER := mins(l'low, r'low);
---    variable lresize, rresize : UNRESOLVED_ufixed (left_index downto right_index);
---    variable lslv, rslv       : UNSIGNED (lresize'length-1 downto 0);
---  begin  -- ?<
---    if ((l'length < 1) or (r'length < 1)) then
---      assert NO_WARNING
---        report fixed_generic_pkg'instance_name
---        & """?<"": null detected, returning X"
---        severity warning;
---      return 'X';
---    else
---      lresize := resize (l, left_index, right_index);
---      rresize := resize (r, left_index, right_index);
---      lslv    := to_uns (lresize);
---      rslv    := to_uns (rresize);
---      return lslv ?< rslv;
---    end if;
---  end function "?<";
---
---  function "?<=" (L, R : UNRESOLVED_ufixed) return STD_ULOGIC is
---    constant left_index       : INTEGER := maximum(l'high, r'high);
---    constant right_index      : INTEGER := mins(l'low, r'low);
---    variable lresize, rresize : UNRESOLVED_ufixed (left_index downto right_index);
---    variable lslv, rslv       : UNSIGNED (lresize'length-1 downto 0);
---  begin  -- ?<=
---    if ((l'length < 1) or (r'length < 1)) then
---      assert NO_WARNING
---        report fixed_generic_pkg'instance_name
---        & """?<="": null detected, returning X"
---        severity warning;
---      return 'X';
---    else
---      lresize := resize (l, left_index, right_index);
---      rresize := resize (r, left_index, right_index);
---      lslv    := to_uns (lresize);
---      rslv    := to_uns (rresize);
---      return lslv ?<= rslv;
---    end if;
---  end function "?<=";
---
---  function "?=" (L, R : UNRESOLVED_sfixed) return STD_ULOGIC is
---    constant left_index       : INTEGER := maximum(l'high, r'high);
---    constant right_index      : INTEGER := mins(l'low, r'low);
---    variable lresize, rresize : UNRESOLVED_sfixed (left_index downto right_index);
---    variable lslv, rslv       : SIGNED (lresize'length-1 downto 0);
---  begin  -- ?=
---    if ((L'length < 1) or (R'length < 1)) then
---      assert NO_WARNING
---        report fixed_generic_pkg'instance_name
---        & """?="": null detected, returning X"
---        severity warning;
---      return 'X';
---    else
---      lresize := resize (l, left_index, right_index);
---      rresize := resize (r, left_index, right_index);
---      lslv    := to_s (lresize);
---      rslv    := to_s (rresize);
---      return lslv ?= rslv;
---    end if;
---  end function "?=";
---
---  function "?/=" (L, R : UNRESOLVED_sfixed) return STD_ULOGIC is
---    constant left_index       : INTEGER := maximum(l'high, r'high);
---    constant right_index      : INTEGER := mins(l'low, r'low);
---    variable lresize, rresize : UNRESOLVED_sfixed (left_index downto right_index);
---    variable lslv, rslv       : SIGNED (lresize'length-1 downto 0);
---  begin  -- ?/=
---    if ((L'length < 1) or (R'length < 1)) then
---      assert NO_WARNING
---        report fixed_generic_pkg'instance_name
---        & """?/="": null detected, returning X"
---        severity warning;
---      return 'X';
---    else
---      lresize := resize (l, left_index, right_index);
---      rresize := resize (r, left_index, right_index);
---      lslv    := to_s (lresize);
---      rslv    := to_s (rresize);
---      return lslv ?/= rslv;
---    end if;
---  end function "?/=";
---
---  function "?>" (L, R : UNRESOLVED_sfixed) return STD_ULOGIC is
---    constant left_index       : INTEGER := maximum(l'high, r'high);
---    constant right_index      : INTEGER := mins(l'low, r'low);
---    variable lresize, rresize : UNRESOLVED_sfixed (left_index downto right_index);
---    variable lslv, rslv       : SIGNED (lresize'length-1 downto 0);
---  begin  -- ?>
---    if ((l'length < 1) or (r'length < 1)) then
---      assert NO_WARNING
---        report fixed_generic_pkg'instance_name
---        & """?>"": null detected, returning X"
---        severity warning;
---      return 'X';
---    else
---      lresize := resize (l, left_index, right_index);
---      rresize := resize (r, left_index, right_index);
---      lslv    := to_s (lresize);
---      rslv    := to_s (rresize);
---      return lslv ?> rslv;
---    end if;
---  end function "?>";
---
---  function "?>=" (L, R : UNRESOLVED_sfixed) return STD_ULOGIC is
---    constant left_index       : INTEGER := maximum(l'high, r'high);
---    constant right_index      : INTEGER := mins(l'low, r'low);
---    variable lresize, rresize : UNRESOLVED_sfixed (left_index downto right_index);
---    variable lslv, rslv       : SIGNED (lresize'length-1 downto 0);
---  begin  -- ?>=
---    if ((l'length < 1) or (r'length < 1)) then
---      assert NO_WARNING
---        report fixed_generic_pkg'instance_name
---        & """?>="": null detected, returning X"
---        severity warning;
---      return 'X';
---    else
---      lresize := resize (l, left_index, right_index);
---      rresize := resize (r, left_index, right_index);
---      lslv    := to_s (lresize);
---      rslv    := to_s (rresize);
---      return lslv ?>= rslv;
---    end if;
---  end function "?>=";
---
---  function "?<" (L, R : UNRESOLVED_sfixed) return STD_ULOGIC is
---    constant left_index       : INTEGER := maximum(l'high, r'high);
---    constant right_index      : INTEGER := mins(l'low, r'low);
---    variable lresize, rresize : UNRESOLVED_sfixed (left_index downto right_index);
---    variable lslv, rslv       : SIGNED (lresize'length-1 downto 0);
---  begin  -- ?<
---    if ((l'length < 1) or (r'length < 1)) then
---      assert NO_WARNING
---        report fixed_generic_pkg'instance_name
---        & """?<"": null detected, returning X"
---        severity warning;
---      return 'X';
---    else
---      lresize := resize (l, left_index, right_index);
---      rresize := resize (r, left_index, right_index);
---      lslv    := to_s (lresize);
---      rslv    := to_s (rresize);
---      return lslv ?< rslv;
---    end if;
---  end function "?<";
---
---  function "?<=" (L, R : UNRESOLVED_sfixed) return STD_ULOGIC is
---    constant left_index       : INTEGER := maximum(l'high, r'high);
---    constant right_index      : INTEGER := mins(l'low, r'low);
---    variable lresize, rresize : UNRESOLVED_sfixed (left_index downto right_index);
---    variable lslv, rslv       : SIGNED (lresize'length-1 downto 0);
---  begin  -- ?<=
---    if ((l'length < 1) or (r'length < 1)) then
---      assert NO_WARNING
---        report fixed_generic_pkg'instance_name
---        & """?<="": null detected, returning X"
---        severity warning;
---      return 'X';
---    else
---      lresize := resize (l, left_index, right_index);
---      rresize := resize (r, left_index, right_index);
---      lslv    := to_s (lresize);
---      rslv    := to_s (rresize);
---      return lslv ?<= rslv;
---    end if;
---  end function "?<=";
+  function "?/=" (L, R : UNRESOLVED_ufixed) return STD_ULOGIC is
+    constant left_index       : INTEGER := maximum(l'high, r'high);
+    constant right_index      : INTEGER := mins(l'low, r'low);
+    variable lresize, rresize : UNRESOLVED_ufixed (left_index downto right_index);
+    variable lslv, rslv       : UNRESOLVED_UNSIGNED (lresize'length-1 downto 0);
+  begin  -- ?/=
+    if ((L'length < 1) or (R'length < 1)) then
+      assert NO_WARNING
+        report fixed_generic_pkg'instance_name
+        & """?/="": null detected, returning X"
+        severity warning;
+      return 'X';
+    else
+      lresize := resize (l, left_index, right_index);
+      rresize := resize (r, left_index, right_index);
+      lslv    := to_uns (lresize);
+      rslv    := to_uns (rresize);
+      return lslv ?/= rslv;
+    end if;
+  end function "?/=";
+
+  function "?>" (L, R : UNRESOLVED_ufixed) return STD_ULOGIC is
+    constant left_index       : INTEGER := maximum(l'high, r'high);
+    constant right_index      : INTEGER := mins(l'low, r'low);
+    variable lresize, rresize : UNRESOLVED_ufixed (left_index downto right_index);
+    variable lslv, rslv       : UNRESOLVED_UNSIGNED (lresize'length-1 downto 0);
+  begin  -- ?>
+    if ((l'length < 1) or (r'length < 1)) then
+      assert NO_WARNING
+        report fixed_generic_pkg'instance_name
+        & """?>"": null detected, returning X"
+        severity warning;
+      return 'X';
+    else
+      lresize := resize (l, left_index, right_index);
+      rresize := resize (r, left_index, right_index);
+      lslv    := to_uns (lresize);
+      rslv    := to_uns (rresize);
+      return lslv ?> rslv;
+    end if;
+  end function "?>";
+
+  function "?>=" (L, R : UNRESOLVED_ufixed) return STD_ULOGIC is
+    constant left_index       : INTEGER := maximum(l'high, r'high);
+    constant right_index      : INTEGER := mins(l'low, r'low);
+    variable lresize, rresize : UNRESOLVED_ufixed (left_index downto right_index);
+    variable lslv, rslv       : UNRESOLVED_UNSIGNED (lresize'length-1 downto 0);
+  begin  -- ?>=
+    if ((l'length < 1) or (r'length < 1)) then
+      assert NO_WARNING
+        report fixed_generic_pkg'instance_name
+        & """?>="": null detected, returning X"
+        severity warning;
+      return 'X';
+    else
+      lresize := resize (l, left_index, right_index);
+      rresize := resize (r, left_index, right_index);
+      lslv    := to_uns (lresize);
+      rslv    := to_uns (rresize);
+      return lslv ?>= rslv;
+    end if;
+  end function "?>=";
+
+  function "?<" (L, R : UNRESOLVED_ufixed) return STD_ULOGIC is
+    constant left_index       : INTEGER := maximum(l'high, r'high);
+    constant right_index      : INTEGER := mins(l'low, r'low);
+    variable lresize, rresize : UNRESOLVED_ufixed (left_index downto right_index);
+    variable lslv, rslv       : UNRESOLVED_UNSIGNED (lresize'length-1 downto 0);
+  begin  -- ?<
+    if ((l'length < 1) or (r'length < 1)) then
+      assert NO_WARNING
+        report fixed_generic_pkg'instance_name
+        & """?<"": null detected, returning X"
+        severity warning;
+      return 'X';
+    else
+      lresize := resize (l, left_index, right_index);
+      rresize := resize (r, left_index, right_index);
+      lslv    := to_uns (lresize);
+      rslv    := to_uns (rresize);
+      return lslv ?< rslv;
+    end if;
+  end function "?<";
+
+  function "?<=" (L, R : UNRESOLVED_ufixed) return STD_ULOGIC is
+    constant left_index       : INTEGER := maximum(l'high, r'high);
+    constant right_index      : INTEGER := mins(l'low, r'low);
+    variable lresize, rresize : UNRESOLVED_ufixed (left_index downto right_index);
+    variable lslv, rslv       : UNRESOLVED_UNSIGNED (lresize'length-1 downto 0);
+  begin  -- ?<=
+    if ((l'length < 1) or (r'length < 1)) then
+      assert NO_WARNING
+        report fixed_generic_pkg'instance_name
+        & """?<="": null detected, returning X"
+        severity warning;
+      return 'X';
+    else
+      lresize := resize (l, left_index, right_index);
+      rresize := resize (r, left_index, right_index);
+      lslv    := to_uns (lresize);
+      rslv    := to_uns (rresize);
+      return lslv ?<= rslv;
+    end if;
+  end function "?<=";
+
+  function "?=" (L, R : UNRESOLVED_sfixed) return STD_ULOGIC is
+    constant left_index       : INTEGER := maximum(l'high, r'high);
+    constant right_index      : INTEGER := mins(l'low, r'low);
+    variable lresize, rresize : UNRESOLVED_sfixed (left_index downto right_index);
+    variable lslv, rslv       : UNRESOLVED_SIGNED (lresize'length-1 downto 0);
+  begin  -- ?=
+    if ((L'length < 1) or (R'length < 1)) then
+      assert NO_WARNING
+        report fixed_generic_pkg'instance_name
+        & """?="": null detected, returning X"
+        severity warning;
+      return 'X';
+    else
+      lresize := resize (l, left_index, right_index);
+      rresize := resize (r, left_index, right_index);
+      lslv    := to_s (lresize);
+      rslv    := to_s (rresize);
+      return lslv ?= rslv;
+    end if;
+  end function "?=";
+
+  function "?/=" (L, R : UNRESOLVED_sfixed) return STD_ULOGIC is
+    constant left_index       : INTEGER := maximum(l'high, r'high);
+    constant right_index      : INTEGER := mins(l'low, r'low);
+    variable lresize, rresize : UNRESOLVED_sfixed (left_index downto right_index);
+    variable lslv, rslv       : UNRESOLVED_SIGNED (lresize'length-1 downto 0);
+  begin  -- ?/=
+    if ((L'length < 1) or (R'length < 1)) then
+      assert NO_WARNING
+        report fixed_generic_pkg'instance_name
+        & """?/="": null detected, returning X"
+        severity warning;
+      return 'X';
+    else
+      lresize := resize (l, left_index, right_index);
+      rresize := resize (r, left_index, right_index);
+      lslv    := to_s (lresize);
+      rslv    := to_s (rresize);
+      return lslv ?/= rslv;
+    end if;
+  end function "?/=";
+
+  function "?>" (L, R : UNRESOLVED_sfixed) return STD_ULOGIC is
+    constant left_index       : INTEGER := maximum(l'high, r'high);
+    constant right_index      : INTEGER := mins(l'low, r'low);
+    variable lresize, rresize : UNRESOLVED_sfixed (left_index downto right_index);
+    variable lslv, rslv       : UNRESOLVED_SIGNED (lresize'length-1 downto 0);
+  begin  -- ?>
+    if ((l'length < 1) or (r'length < 1)) then
+      assert NO_WARNING
+        report fixed_generic_pkg'instance_name
+        & """?>"": null detected, returning X"
+        severity warning;
+      return 'X';
+    else
+      lresize := resize (l, left_index, right_index);
+      rresize := resize (r, left_index, right_index);
+      lslv    := to_s (lresize);
+      rslv    := to_s (rresize);
+      return lslv ?> rslv;
+    end if;
+  end function "?>";
+
+  function "?>=" (L, R : UNRESOLVED_sfixed) return STD_ULOGIC is
+    constant left_index       : INTEGER := maximum(l'high, r'high);
+    constant right_index      : INTEGER := mins(l'low, r'low);
+    variable lresize, rresize : UNRESOLVED_sfixed (left_index downto right_index);
+    variable lslv, rslv       : UNRESOLVED_SIGNED (lresize'length-1 downto 0);
+  begin  -- ?>=
+    if ((l'length < 1) or (r'length < 1)) then
+      assert NO_WARNING
+        report fixed_generic_pkg'instance_name
+        & """?>="": null detected, returning X"
+        severity warning;
+      return 'X';
+    else
+      lresize := resize (l, left_index, right_index);
+      rresize := resize (r, left_index, right_index);
+      lslv    := to_s (lresize);
+      rslv    := to_s (rresize);
+      return lslv ?>= rslv;
+    end if;
+  end function "?>=";
+
+  function "?<" (L, R : UNRESOLVED_sfixed) return STD_ULOGIC is
+    constant left_index       : INTEGER := maximum(l'high, r'high);
+    constant right_index      : INTEGER := mins(l'low, r'low);
+    variable lresize, rresize : UNRESOLVED_sfixed (left_index downto right_index);
+    variable lslv, rslv       : UNRESOLVED_SIGNED (lresize'length-1 downto 0);
+  begin  -- ?<
+    if ((l'length < 1) or (r'length < 1)) then
+      assert NO_WARNING
+        report fixed_generic_pkg'instance_name
+        & """?<"": null detected, returning X"
+        severity warning;
+      return 'X';
+    else
+      lresize := resize (l, left_index, right_index);
+      rresize := resize (r, left_index, right_index);
+      lslv    := to_s (lresize);
+      rslv    := to_s (rresize);
+      return lslv ?< rslv;
+    end if;
+  end function "?<";
+
+  function "?<=" (L, R : UNRESOLVED_sfixed) return STD_ULOGIC is
+    constant left_index       : INTEGER := maximum(l'high, r'high);
+    constant right_index      : INTEGER := mins(l'low, r'low);
+    variable lresize, rresize : UNRESOLVED_sfixed (left_index downto right_index);
+    variable lslv, rslv       : UNRESOLVED_SIGNED (lresize'length-1 downto 0);
+  begin  -- ?<=
+    if ((l'length < 1) or (r'length < 1)) then
+      assert NO_WARNING
+        report fixed_generic_pkg'instance_name
+        & """?<="": null detected, returning X"
+        severity warning;
+      return 'X';
+    else
+      lresize := resize (l, left_index, right_index);
+      rresize := resize (r, left_index, right_index);
+      lslv    := to_s (lresize);
+      rslv    := to_s (rresize);
+      return lslv ?<= rslv;
+    end if;
+  end function "?<=";
 
   -- Match function, similar to "std_match" from numeric_std
   function std_match (L, R : UNRESOLVED_ufixed) return BOOLEAN is
@@ -2151,7 +2063,7 @@ package body fixed_generic_pkg is
     constant left_index       : INTEGER := maximum(l'high, r'high);
     constant right_index      : INTEGER := mins(l'low, r'low);
     variable lresize, rresize : UNRESOLVED_ufixed (left_index downto right_index);
-    variable lslv, rslv       : UNSIGNED (lresize'length-1 downto 0);
+    variable lslv, rslv       : UNRESOLVED_UNSIGNED (lresize'length-1 downto 0);
   begin
     if (l'length < 1 or r'length < 1) then
       assert NO_WARNING
@@ -2180,7 +2092,7 @@ package body fixed_generic_pkg is
     constant left_index       : INTEGER := maximum(l'high, r'high);
     constant right_index      : INTEGER := mins(l'low, r'low);
     variable lresize, rresize : UNRESOLVED_sfixed (left_index downto right_index);
-    variable lslv, rslv       : SIGNED (lresize'length-1 downto 0);
+    variable lslv, rslv       : UNRESOLVED_SIGNED (lresize'length-1 downto 0);
   begin
     if (l'length < 1 or r'length < 1) then
       assert NO_WARNING
@@ -2209,7 +2121,7 @@ package body fixed_generic_pkg is
     constant left_index       : INTEGER := maximum(l'high, r'high);
     constant right_index      : INTEGER := mins(l'low, r'low);
     variable lresize, rresize : UNRESOLVED_ufixed (left_index downto right_index);
-    variable lslv, rslv       : UNSIGNED (lresize'length-1 downto 0);
+    variable lslv, rslv       : UNRESOLVED_UNSIGNED (lresize'length-1 downto 0);
   begin
     if (l'length < 1 or r'length < 1) then
       assert NO_WARNING
@@ -2238,7 +2150,7 @@ package body fixed_generic_pkg is
     constant left_index       : INTEGER := maximum(l'high, r'high);
     constant right_index      : INTEGER := mins(l'low, r'low);
     variable lresize, rresize : UNRESOLVED_sfixed (left_index downto right_index);
-    variable lslv, rslv       : SIGNED (lresize'length-1 downto 0);
+    variable lslv, rslv       : UNRESOLVED_SIGNED (lresize'length-1 downto 0);
   begin
     if (l'length < 1 or r'length < 1) then
       assert NO_WARNING
@@ -2267,7 +2179,7 @@ package body fixed_generic_pkg is
     constant left_index       : INTEGER := maximum(l'high, r'high);
     constant right_index      : INTEGER := mins(l'low, r'low);
     variable lresize, rresize : UNRESOLVED_ufixed (left_index downto right_index);
-    variable lslv, rslv       : UNSIGNED (lresize'length-1 downto 0);
+    variable lslv, rslv       : UNRESOLVED_UNSIGNED (lresize'length-1 downto 0);
   begin
     if (l'length < 1 or r'length < 1) then
       assert NO_WARNING
@@ -2296,7 +2208,7 @@ package body fixed_generic_pkg is
     constant left_index       : INTEGER := maximum(l'high, r'high);
     constant right_index      : INTEGER := mins(l'low, r'low);
     variable lresize, rresize : UNRESOLVED_sfixed (left_index downto right_index);
-    variable lslv, rslv       : SIGNED (lresize'length-1 downto 0);
+    variable lslv, rslv       : UNRESOLVED_SIGNED (lresize'length-1 downto 0);
   begin
     if (l'length < 1 or r'length < 1) then
       assert NO_WARNING
@@ -2325,7 +2237,7 @@ package body fixed_generic_pkg is
     constant left_index       : INTEGER := maximum(l'high, r'high);
     constant right_index      : INTEGER := mins(l'low, r'low);
     variable lresize, rresize : UNRESOLVED_ufixed (left_index downto right_index);
-    variable lslv, rslv       : UNSIGNED (lresize'length-1 downto 0);
+    variable lslv, rslv       : UNRESOLVED_UNSIGNED (lresize'length-1 downto 0);
   begin
     if (l'length < 1 or r'length < 1) then
       assert NO_WARNING
@@ -2354,7 +2266,7 @@ package body fixed_generic_pkg is
     constant left_index       : INTEGER := maximum(l'high, r'high);
     constant right_index      : INTEGER := mins(l'low, r'low);
     variable lresize, rresize : UNRESOLVED_sfixed (left_index downto right_index);
-    variable lslv, rslv       : SIGNED (lresize'length-1 downto 0);
+    variable lslv, rslv       : UNRESOLVED_SIGNED (lresize'length-1 downto 0);
   begin
     if (l'length < 1 or r'length < 1) then
       assert NO_WARNING
@@ -2383,7 +2295,7 @@ package body fixed_generic_pkg is
     constant left_index       : INTEGER := maximum(l'high, r'high);
     constant right_index      : INTEGER := mins(l'low, r'low);
     variable lresize, rresize : UNRESOLVED_ufixed (left_index downto right_index);
-    variable lslv, rslv       : UNSIGNED (lresize'length-1 downto 0);
+    variable lslv, rslv       : UNRESOLVED_UNSIGNED (lresize'length-1 downto 0);
   begin
     if (l'length < 1 or r'length < 1) then
       assert NO_WARNING
@@ -2412,7 +2324,7 @@ package body fixed_generic_pkg is
     constant left_index       : INTEGER := maximum(l'high, r'high);
     constant right_index      : INTEGER := mins(l'low, r'low);
     variable lresize, rresize : UNRESOLVED_sfixed (left_index downto right_index);
-    variable lslv, rslv       : SIGNED (lresize'length-1 downto 0);
+    variable lslv, rslv       : UNRESOLVED_SIGNED (lresize'length-1 downto 0);
   begin
     if (l'length < 1 or r'length < 1) then
       assert NO_WARNING
@@ -2441,7 +2353,7 @@ package body fixed_generic_pkg is
     constant left_index       : INTEGER := maximum(l'high, r'high);
     constant right_index      : INTEGER := mins(l'low, r'low);
     variable lresize, rresize : UNRESOLVED_ufixed (left_index downto right_index);
-    variable lslv, rslv       : UNSIGNED (lresize'length-1 downto 0);
+    variable lslv, rslv       : UNRESOLVED_UNSIGNED (lresize'length-1 downto 0);
   begin
     if (l'length < 1 or r'length < 1) then
       assert NO_WARNING
@@ -2470,7 +2382,7 @@ package body fixed_generic_pkg is
     constant left_index       : INTEGER := maximum(l'high, r'high);
     constant right_index      : INTEGER := mins(l'low, r'low);
     variable lresize, rresize : UNRESOLVED_sfixed (left_index downto right_index);
-    variable lslv, rslv       : SIGNED (lresize'length-1 downto 0);
+    variable lslv, rslv       : UNRESOLVED_SIGNED (lresize'length-1 downto 0);
   begin
     if (l'length < 1 or r'length < 1) then
       assert NO_WARNING
@@ -2773,7 +2685,7 @@ package body fixed_generic_pkg is
   end function to_sfixed;
 
   function to_ufixed (
-    arg                     : UNSIGNED;             -- unsigned
+    arg                     : UNRESOLVED_UNSIGNED;             -- unsigned
     constant left_index     : INTEGER;  -- left index (high index)
     constant right_index    : INTEGER                   := 0;  -- right index
     constant overflow_style : fixed_overflow_style_type := fixed_overflow_style;
@@ -2781,7 +2693,7 @@ package body fixed_generic_pkg is
     return UNRESOLVED_ufixed
   is
     constant ARG_LEFT : INTEGER := ARG'length-1;
-    alias XARG        : UNSIGNED(ARG_LEFT downto 0) is ARG;
+    alias XARG        : UNRESOLVED_UNSIGNED(ARG_LEFT downto 0) is ARG;
     variable result   : UNRESOLVED_ufixed (left_index downto right_index);
   begin
     if arg'length < 1 or (left_index < right_index) then
@@ -2797,11 +2709,11 @@ package body fixed_generic_pkg is
 
   -- converted version
   function to_ufixed (
-    arg : UNSIGNED)          -- unsigned
+    arg : UNRESOLVED_UNSIGNED)          -- unsigned
     return UNRESOLVED_ufixed
   is
     constant ARG_LEFT : INTEGER := ARG'length-1;
-    alias XARG        : UNSIGNED(ARG_LEFT downto 0) is ARG;
+    alias XARG        : UNRESOLVED_UNSIGNED(ARG_LEFT downto 0) is ARG;
   begin
     if arg'length < 1 then
       return NAUF;
@@ -2810,7 +2722,7 @@ package body fixed_generic_pkg is
   end function to_ufixed;
 
   function to_sfixed (
-    arg                     : SIGNED;               -- signed
+    arg                     : UNRESOLVED_SIGNED;               -- signed
     constant left_index     : INTEGER;  -- left index (high index)
     constant right_index    : INTEGER                   := 0;  -- right index
     constant overflow_style : fixed_overflow_style_type := fixed_overflow_style;
@@ -2818,7 +2730,7 @@ package body fixed_generic_pkg is
     return UNRESOLVED_sfixed
   is
     constant ARG_LEFT : INTEGER := ARG'length-1;
-    alias XARG        : SIGNED(ARG_LEFT downto 0) is ARG;
+    alias XARG        : UNRESOLVED_SIGNED(ARG_LEFT downto 0) is ARG;
     variable result   : UNRESOLVED_sfixed (left_index downto right_index);
   begin
     if arg'length < 1 or (left_index < right_index) then
@@ -2834,11 +2746,11 @@ package body fixed_generic_pkg is
 
   -- converted version
   function to_sfixed (
-    arg : SIGNED)            -- signed
+    arg : UNRESOLVED_SIGNED)            -- signed
     return UNRESOLVED_sfixed
   is
     constant ARG_LEFT : INTEGER := ARG'length-1;
-    alias XARG        : SIGNED(ARG_LEFT downto 0) is ARG;
+    alias XARG        : UNRESOLVED_SIGNED(ARG_LEFT downto 0) is ARG;
   begin
     if arg'length < 1 then
       return NASF;
@@ -3142,7 +3054,7 @@ package body fixed_generic_pkg is
     constant size           : NATURAL;            -- length of output
     constant overflow_style : fixed_overflow_style_type := fixed_overflow_style;
     constant round_style    : fixed_round_style_type    := fixed_round_style)
-    return UNSIGNED is
+    return UNRESOLVED_UNSIGNED is
   begin
     return to_uns(resize (arg            => arg,
                           left_index     => size-1,
@@ -3153,10 +3065,10 @@ package body fixed_generic_pkg is
 
   function to_unsigned (
     arg                     : UNRESOLVED_ufixed;    -- ufixed point input
-    size_res                : UNSIGNED;  -- length of output
+    size_res                : UNRESOLVED_UNSIGNED;  -- length of output
     constant overflow_style : fixed_overflow_style_type := fixed_overflow_style;
     constant round_style    : fixed_round_style_type    := fixed_round_style)
-    return UNSIGNED is
+    return UNRESOLVED_UNSIGNED is
   begin
     return to_unsigned (arg            => arg,
                         size           => size_res'length,
@@ -3169,7 +3081,7 @@ package body fixed_generic_pkg is
     constant size           : NATURAL;            -- length of output
     constant overflow_style : fixed_overflow_style_type := fixed_overflow_style;
     constant round_style    : fixed_round_style_type    := fixed_round_style)
-    return SIGNED is
+    return UNRESOLVED_SIGNED is
   begin
     return to_s(resize (arg            => arg,
                         left_index     => size-1,
@@ -3180,10 +3092,10 @@ package body fixed_generic_pkg is
 
   function to_signed (
     arg                     : UNRESOLVED_sfixed;  -- sfixed point input
-    size_res                : SIGNED;  -- used for length of output
+    size_res                : UNRESOLVED_SIGNED;  -- used for length of output
     constant overflow_style : fixed_overflow_style_type := fixed_overflow_style;
     constant round_style    : fixed_round_style_type    := fixed_round_style)
-    return SIGNED is
+    return UNRESOLVED_SIGNED is
   begin
     return to_signed (arg            => arg,
                       size           => size_res'length,
@@ -3258,7 +3170,7 @@ package body fixed_generic_pkg is
     return NATURAL
   is
     constant left_index : INTEGER := arg'high;
-    variable arg_uns    : UNSIGNED (left_index+1 downto 0)
+    variable arg_uns    : UNRESOLVED_UNSIGNED (left_index+1 downto 0)
       := (others => '0');
   begin
     if (arg'length < 1) then
@@ -3290,7 +3202,7 @@ package body fixed_generic_pkg is
   is
     constant left_index  : INTEGER := arg'high;
     constant right_index : INTEGER := arg'low;
-    variable arg_s       : SIGNED (left_index+1 downto 0);
+    variable arg_s       : UNRESOLVED_SIGNED (left_index+1 downto 0);
   begin
     if (arg'length < 1) then
       return 0;
@@ -3435,13 +3347,13 @@ package body fixed_generic_pkg is
                           (right_index = arghigh+1);
       elsif (left_index < arglow) then  -- return overflow
         if (overflow_style = fixed_saturate) and
-          (or_reduce(to_sulv(invec)) = '1') then
+          (or(to_sulv(invec)) = '1') then
           result := saturate (result'high, result'low);     -- saturate
         end if;
       elsif (arghigh > left_index) then
         -- wrap or saturate?
         if (overflow_style = fixed_saturate and
-            or_reduce(to_sulv(invec(arghigh downto left_index+1))) = '1')
+            or (to_sulv(invec(arghigh downto left_index+1))) = '1')
         then
           result := saturate (result'high, result'low);     -- saturate
         else
@@ -3504,7 +3416,7 @@ package body fixed_generic_pkg is
                           (right_index = arghigh+1);
       elsif (left_index < arglow) then  -- return overflow
         if (overflow_style = fixed_saturate) then
-          reduced := or_reduce (to_sulv(invec));
+          reduced := or (to_sulv(invec));
           if (reduced = '1') then
             if (invec(arghigh) = '0') then
               -- saturate POSITIVE
@@ -3519,7 +3431,7 @@ package body fixed_generic_pkg is
         end if;
       elsif (arghigh > left_index) then
         if (invec(arghigh) = '0') then
-          reduced := or_reduce (to_sulv(invec(arghigh-1 downto
+          reduced := or (to_sulv(invec(arghigh-1 downto
                                       left_index)));
           if overflow_style = fixed_saturate and reduced = '1' then
             -- saturate positive
@@ -3534,7 +3446,7 @@ package body fixed_generic_pkg is
             end if;
           end if;
         else
-          reduced := and_reduce (to_sulv(invec(arghigh-1 downto
+          reduced := and (to_sulv(invec(arghigh-1 downto
                                        left_index)));
           if overflow_style = fixed_saturate and reduced = '0' then
             result := not saturate (result'high, result'low);
@@ -3704,7 +3616,7 @@ package body fixed_generic_pkg is
   end function to_sfixed;
 
   function to_ufixed (
-    arg                     : UNSIGNED;  -- unsigned
+    arg                     : UNRESOLVED_UNSIGNED;  -- unsigned
     size_res                : UNRESOLVED_ufixed;    -- for size only
     constant overflow_style : fixed_overflow_style_type := fixed_overflow_style;
     constant round_style    : fixed_round_style_type    := fixed_round_style)
@@ -3726,7 +3638,7 @@ package body fixed_generic_pkg is
   end function to_ufixed;
   
   function to_sfixed (
-    arg                     : SIGNED;  -- signed
+    arg                     : UNRESOLVED_SIGNED;  -- signed
     size_res                : UNRESOLVED_sfixed;  -- for size only
     constant overflow_style : fixed_overflow_style_type := fixed_overflow_style;
     constant round_style    : fixed_round_style_type    := fixed_round_style)
@@ -4229,53 +4141,53 @@ package body fixed_generic_pkg is
     return (l < to_ufixed (r, l'high, l'low));
   end function "<";
 
---  function "?=" (
---    l : UNRESOLVED_ufixed;
---    r : NATURAL)                        -- fixed point input
---    return STD_ULOGIC is
---  begin
---    return (l ?= to_ufixed (r, l'high, l'low));
---  end function "?=";
---
---  function "?/=" (
---    l : UNRESOLVED_ufixed;
---    r : NATURAL)                        -- fixed point input
---    return STD_ULOGIC is
---  begin
---    return (l ?/= to_ufixed (r, l'high, l'low));
---  end function "?/=";
---
---  function "?>=" (
---    l : UNRESOLVED_ufixed;
---    r : NATURAL)                        -- fixed point input
---    return STD_ULOGIC is
---  begin
---    return (l ?>= to_ufixed (r, l'high, l'low));
---  end function "?>=";
---
---  function "?<=" (
---    l : UNRESOLVED_ufixed;
---    r : NATURAL)                        -- fixed point input
---    return STD_ULOGIC is
---  begin
---    return (l ?<= to_ufixed (r, l'high, l'low));
---  end function "?<=";
+  function "?=" (
+    l : UNRESOLVED_ufixed;
+    r : NATURAL)                        -- fixed point input
+    return STD_ULOGIC is
+  begin
+    return (l ?= to_ufixed (r, l'high, l'low));
+  end function "?=";
 
---  function "?>" (
---    l : UNRESOLVED_ufixed;
---    r : NATURAL)                        -- fixed point input
---    return STD_ULOGIC is
---  begin
---    return (l ?> to_ufixed (r, l'high, l'low));
---  end function "?>";
---
---  function "?<" (
---    l : UNRESOLVED_ufixed;
---    r : NATURAL)                        -- fixed point input
---    return STD_ULOGIC is
---  begin
---    return (l ?< to_ufixed (r, l'high, l'low));
---  end function "?<";
+  function "?/=" (
+    l : UNRESOLVED_ufixed;
+    r : NATURAL)                        -- fixed point input
+    return STD_ULOGIC is
+  begin
+    return (l ?/= to_ufixed (r, l'high, l'low));
+  end function "?/=";
+
+  function "?>=" (
+    l : UNRESOLVED_ufixed;
+    r : NATURAL)                        -- fixed point input
+    return STD_ULOGIC is
+  begin
+    return (l ?>= to_ufixed (r, l'high, l'low));
+  end function "?>=";
+
+  function "?<=" (
+    l : UNRESOLVED_ufixed;
+    r : NATURAL)                        -- fixed point input
+    return STD_ULOGIC is
+  begin
+    return (l ?<= to_ufixed (r, l'high, l'low));
+  end function "?<=";
+
+  function "?>" (
+    l : UNRESOLVED_ufixed;
+    r : NATURAL)                        -- fixed point input
+    return STD_ULOGIC is
+  begin
+    return (l ?> to_ufixed (r, l'high, l'low));
+  end function "?>";
+
+  function "?<" (
+    l : UNRESOLVED_ufixed;
+    r : NATURAL)                        -- fixed point input
+    return STD_ULOGIC is
+  begin
+    return (l ?< to_ufixed (r, l'high, l'low));
+  end function "?<";
 
   function maximum (
     l : UNRESOLVED_ufixed;              -- fixed point input
@@ -4342,53 +4254,53 @@ package body fixed_generic_pkg is
     return (to_ufixed (l, r'high, r'low) < r);
   end function "<";
 
---  function "?=" (
---    l : NATURAL;
---    r : UNRESOLVED_ufixed)              -- fixed point input
---    return STD_ULOGIC is
---  begin
---    return (to_ufixed (l, r'high, r'low) ?= r);
---  end function "?=";
---
---  function "?/=" (
---    l : NATURAL;
---    r : UNRESOLVED_ufixed)              -- fixed point input
---    return STD_ULOGIC is
---  begin
---    return (to_ufixed (l, r'high, r'low) ?/= r);
---  end function "?/=";
+  function "?=" (
+    l : NATURAL;
+    r : UNRESOLVED_ufixed)              -- fixed point input
+    return STD_ULOGIC is
+  begin
+    return (to_ufixed (l, r'high, r'low) ?= r);
+  end function "?=";
 
---  function "?>=" (
---    l : NATURAL;
---    r : UNRESOLVED_ufixed)              -- fixed point input
---    return STD_ULOGIC is
---  begin
---    return (to_ufixed (l, r'high, r'low) ?>= r);
---  end function "?>=";
+  function "?/=" (
+    l : NATURAL;
+    r : UNRESOLVED_ufixed)              -- fixed point input
+    return STD_ULOGIC is
+  begin
+    return (to_ufixed (l, r'high, r'low) ?/= r);
+  end function "?/=";
 
---  function "?<=" (
---    l : NATURAL;
---    r : UNRESOLVED_ufixed)              -- fixed point input
---    return STD_ULOGIC is
---  begin
---    return (to_ufixed (l, r'high, r'low) ?<= r);
---  end function "?<=";
---
---  function "?>" (
---    l : NATURAL;
---    r : UNRESOLVED_ufixed)              -- fixed point input
---    return STD_ULOGIC is
---  begin
---    return (to_ufixed (l, r'high, r'low) ?> r);
---  end function "?>";
---
---  function "?<" (
---    l : NATURAL;
---    r : UNRESOLVED_ufixed)              -- fixed point input
---    return STD_ULOGIC is
---  begin
---    return (to_ufixed (l, r'high, r'low) ?< r);
---  end function "?<";
+  function "?>=" (
+    l : NATURAL;
+    r : UNRESOLVED_ufixed)              -- fixed point input
+    return STD_ULOGIC is
+  begin
+    return (to_ufixed (l, r'high, r'low) ?>= r);
+  end function "?>=";
+
+  function "?<=" (
+    l : NATURAL;
+    r : UNRESOLVED_ufixed)              -- fixed point input
+    return STD_ULOGIC is
+  begin
+    return (to_ufixed (l, r'high, r'low) ?<= r);
+  end function "?<=";
+
+  function "?>" (
+    l : NATURAL;
+    r : UNRESOLVED_ufixed)              -- fixed point input
+    return STD_ULOGIC is
+  begin
+    return (to_ufixed (l, r'high, r'low) ?> r);
+  end function "?>";
+
+  function "?<" (
+    l : NATURAL;
+    r : UNRESOLVED_ufixed)              -- fixed point input
+    return STD_ULOGIC is
+  begin
+    return (to_ufixed (l, r'high, r'low) ?< r);
+  end function "?<";
 
   function maximum (
     l : NATURAL;
@@ -4455,53 +4367,53 @@ package body fixed_generic_pkg is
     return (l < to_ufixed (r, l'high, l'low));
   end function "<";
 
---  function "?=" (
---    l : UNRESOLVED_ufixed;
---    r : REAL)
---    return STD_ULOGIC is
---  begin
---    return (l ?= to_ufixed (r, l'high, l'low));
---  end function "?=";
---
---  function "?/=" (
---    l : UNRESOLVED_ufixed;
---    r : REAL)
---    return STD_ULOGIC is
---  begin
---    return (l ?/= to_ufixed (r, l'high, l'low));
---  end function "?/=";
---
---  function "?>=" (
---    l : UNRESOLVED_ufixed;
---    r : REAL)
---    return STD_ULOGIC is
---  begin
---    return (l ?>= to_ufixed (r, l'high, l'low));
---  end function "?>=";
---
---  function "?<=" (
---    l : UNRESOLVED_ufixed;
---    r : REAL)
---    return STD_ULOGIC is
---  begin
---    return (l ?<= to_ufixed (r, l'high, l'low));
---  end function "?<=";
---
---  function "?>" (
---    l : UNRESOLVED_ufixed;
---    r : REAL)
---    return STD_ULOGIC is
---  begin
---    return (l ?> to_ufixed (r, l'high, l'low));
---  end function "?>";
---
---  function "?<" (
---    l : UNRESOLVED_ufixed;
---    r : REAL)
---    return STD_ULOGIC is
---  begin
---    return (l ?< to_ufixed (r, l'high, l'low));
---  end function "?<";
+  function "?=" (
+    l : UNRESOLVED_ufixed;
+    r : REAL)
+    return STD_ULOGIC is
+  begin
+    return (l ?= to_ufixed (r, l'high, l'low));
+  end function "?=";
+
+  function "?/=" (
+    l : UNRESOLVED_ufixed;
+    r : REAL)
+    return STD_ULOGIC is
+  begin
+    return (l ?/= to_ufixed (r, l'high, l'low));
+  end function "?/=";
+
+  function "?>=" (
+    l : UNRESOLVED_ufixed;
+    r : REAL)
+    return STD_ULOGIC is
+  begin
+    return (l ?>= to_ufixed (r, l'high, l'low));
+  end function "?>=";
+
+  function "?<=" (
+    l : UNRESOLVED_ufixed;
+    r : REAL)
+    return STD_ULOGIC is
+  begin
+    return (l ?<= to_ufixed (r, l'high, l'low));
+  end function "?<=";
+
+  function "?>" (
+    l : UNRESOLVED_ufixed;
+    r : REAL)
+    return STD_ULOGIC is
+  begin
+    return (l ?> to_ufixed (r, l'high, l'low));
+  end function "?>";
+
+  function "?<" (
+    l : UNRESOLVED_ufixed;
+    r : REAL)
+    return STD_ULOGIC is
+  begin
+    return (l ?< to_ufixed (r, l'high, l'low));
+  end function "?<";
 
   function maximum (
     l : UNRESOLVED_ufixed;
@@ -4568,53 +4480,53 @@ package body fixed_generic_pkg is
     return (to_ufixed (l, r'high, r'low) < r);
   end function "<";
 
---  function "?=" (
---    l : REAL;
---    r : UNRESOLVED_ufixed)              -- fixed point input
---    return STD_ULOGIC is
---  begin
---    return (to_ufixed (l, r'high, r'low) ?= r);
---  end function "?=";
---
---  function "?/=" (
---    l : REAL;
---    r : UNRESOLVED_ufixed)              -- fixed point input
---    return STD_ULOGIC is
---  begin
---    return (to_ufixed (l, r'high, r'low) ?/= r);
---  end function "?/=";
---
---  function "?>=" (
---    l : REAL;
---    r : UNRESOLVED_ufixed)              -- fixed point input
---    return STD_ULOGIC is
---  begin
---    return (to_ufixed (l, r'high, r'low) ?>= r);
---  end function "?>=";
---
---  function "?<=" (
---    l : REAL;
---    r : UNRESOLVED_ufixed)              -- fixed point input
---    return STD_ULOGIC is
---  begin
---    return (to_ufixed (l, r'high, r'low) ?<= r);
---  end function "?<=";
---
---  function "?>" (
---    l : REAL;
---    r : UNRESOLVED_ufixed)              -- fixed point input
---    return STD_ULOGIC is
---  begin
---    return (to_ufixed (l, r'high, r'low) ?> r);
---  end function "?>";
---
---  function "?<" (
---    l : REAL;
---    r : UNRESOLVED_ufixed)              -- fixed point input
---    return STD_ULOGIC is
---  begin
---    return (to_ufixed (l, r'high, r'low) ?< r);
---  end function "?<";
+  function "?=" (
+    l : REAL;
+    r : UNRESOLVED_ufixed)              -- fixed point input
+    return STD_ULOGIC is
+  begin
+    return (to_ufixed (l, r'high, r'low) ?= r);
+  end function "?=";
+
+  function "?/=" (
+    l : REAL;
+    r : UNRESOLVED_ufixed)              -- fixed point input
+    return STD_ULOGIC is
+  begin
+    return (to_ufixed (l, r'high, r'low) ?/= r);
+  end function "?/=";
+
+  function "?>=" (
+    l : REAL;
+    r : UNRESOLVED_ufixed)              -- fixed point input
+    return STD_ULOGIC is
+  begin
+    return (to_ufixed (l, r'high, r'low) ?>= r);
+  end function "?>=";
+
+  function "?<=" (
+    l : REAL;
+    r : UNRESOLVED_ufixed)              -- fixed point input
+    return STD_ULOGIC is
+  begin
+    return (to_ufixed (l, r'high, r'low) ?<= r);
+  end function "?<=";
+
+  function "?>" (
+    l : REAL;
+    r : UNRESOLVED_ufixed)              -- fixed point input
+    return STD_ULOGIC is
+  begin
+    return (to_ufixed (l, r'high, r'low) ?> r);
+  end function "?>";
+
+  function "?<" (
+    l : REAL;
+    r : UNRESOLVED_ufixed)              -- fixed point input
+    return STD_ULOGIC is
+  begin
+    return (to_ufixed (l, r'high, r'low) ?< r);
+  end function "?<";
   
   function maximum (
     l : REAL;
@@ -4681,53 +4593,53 @@ package body fixed_generic_pkg is
     return (l < to_sfixed (r, l'high, l'low));
   end function "<";
 
---  function "?=" (
---    l : UNRESOLVED_sfixed;
---    r : INTEGER)
---    return STD_ULOGIC is
---  begin
---    return (l ?= to_sfixed (r, l'high, l'low));
---  end function "?=";
---
---  function "?/=" (
---    l : UNRESOLVED_sfixed;
---    r : INTEGER)
---    return STD_ULOGIC is
---  begin
---    return (l ?/= to_sfixed (r, l'high, l'low));
---  end function "?/=";
---
---  function "?>=" (
---    l : UNRESOLVED_sfixed;
---    r : INTEGER)
---    return STD_ULOGIC is
---  begin
---    return (l ?>= to_sfixed (r, l'high, l'low));
---  end function "?>=";
---
---  function "?<=" (
---    l : UNRESOLVED_sfixed;
---    r : INTEGER)
---    return STD_ULOGIC is
---  begin
---    return (l ?<= to_sfixed (r, l'high, l'low));
---  end function "?<=";
---
---  function "?>" (
---    l : UNRESOLVED_sfixed;
---    r : INTEGER)
---    return STD_ULOGIC is
---  begin
---    return (l ?> to_sfixed (r, l'high, l'low));
---  end function "?>";
---
---  function "?<" (
---    l : UNRESOLVED_sfixed;
---    r : INTEGER)
---    return STD_ULOGIC is
---  begin
---    return (l ?< to_sfixed (r, l'high, l'low));
---  end function "?<";
+  function "?=" (
+    l : UNRESOLVED_sfixed;
+    r : INTEGER)
+    return STD_ULOGIC is
+  begin
+    return (l ?= to_sfixed (r, l'high, l'low));
+  end function "?=";
+
+  function "?/=" (
+    l : UNRESOLVED_sfixed;
+    r : INTEGER)
+    return STD_ULOGIC is
+  begin
+    return (l ?/= to_sfixed (r, l'high, l'low));
+  end function "?/=";
+
+  function "?>=" (
+    l : UNRESOLVED_sfixed;
+    r : INTEGER)
+    return STD_ULOGIC is
+  begin
+    return (l ?>= to_sfixed (r, l'high, l'low));
+  end function "?>=";
+
+  function "?<=" (
+    l : UNRESOLVED_sfixed;
+    r : INTEGER)
+    return STD_ULOGIC is
+  begin
+    return (l ?<= to_sfixed (r, l'high, l'low));
+  end function "?<=";
+
+  function "?>" (
+    l : UNRESOLVED_sfixed;
+    r : INTEGER)
+    return STD_ULOGIC is
+  begin
+    return (l ?> to_sfixed (r, l'high, l'low));
+  end function "?>";
+
+  function "?<" (
+    l : UNRESOLVED_sfixed;
+    r : INTEGER)
+    return STD_ULOGIC is
+  begin
+    return (l ?< to_sfixed (r, l'high, l'low));
+  end function "?<";
 
   function maximum (
     l : UNRESOLVED_sfixed;
@@ -4794,53 +4706,53 @@ package body fixed_generic_pkg is
     return (to_sfixed (l, r'high, r'low) < r);
   end function "<";
 
---  function "?=" (
---    l : INTEGER;
---    r : UNRESOLVED_sfixed)              -- fixed point input
---    return STD_ULOGIC is
---  begin
---    return (to_sfixed (l, r'high, r'low) ?= r);
---  end function "?=";
---
---  function "?/=" (
---    l : INTEGER;
---    r : UNRESOLVED_sfixed)              -- fixed point input
---    return STD_ULOGIC is
---  begin
---    return (to_sfixed (l, r'high, r'low) ?/= r);
---  end function "?/=";
---
---  function "?>=" (
---    l : INTEGER;
---    r : UNRESOLVED_sfixed)              -- fixed point input
---    return STD_ULOGIC is
---  begin
---    return (to_sfixed (l, r'high, r'low) ?>= r);
---  end function "?>=";
---
---  function "?<=" (
---    l : INTEGER;
---    r : UNRESOLVED_sfixed)              -- fixed point input
---    return STD_ULOGIC is
---  begin
---    return (to_sfixed (l, r'high, r'low) ?<= r);
---  end function "?<=";
---
---  function "?>" (
---    l : INTEGER;
---    r : UNRESOLVED_sfixed)              -- fixed point input
---    return STD_ULOGIC is
---  begin
---    return (to_sfixed (l, r'high, r'low) ?> r);
---  end function "?>";
---
---  function "?<" (
---    l : INTEGER;
---    r : UNRESOLVED_sfixed)              -- fixed point input
---    return STD_ULOGIC is
---  begin
---    return (to_sfixed (l, r'high, r'low) ?< r);
---  end function "?<";
+  function "?=" (
+    l : INTEGER;
+    r : UNRESOLVED_sfixed)              -- fixed point input
+    return STD_ULOGIC is
+  begin
+    return (to_sfixed (l, r'high, r'low) ?= r);
+  end function "?=";
+
+  function "?/=" (
+    l : INTEGER;
+    r : UNRESOLVED_sfixed)              -- fixed point input
+    return STD_ULOGIC is
+  begin
+    return (to_sfixed (l, r'high, r'low) ?/= r);
+  end function "?/=";
+
+  function "?>=" (
+    l : INTEGER;
+    r : UNRESOLVED_sfixed)              -- fixed point input
+    return STD_ULOGIC is
+  begin
+    return (to_sfixed (l, r'high, r'low) ?>= r);
+  end function "?>=";
+
+  function "?<=" (
+    l : INTEGER;
+    r : UNRESOLVED_sfixed)              -- fixed point input
+    return STD_ULOGIC is
+  begin
+    return (to_sfixed (l, r'high, r'low) ?<= r);
+  end function "?<=";
+
+  function "?>" (
+    l : INTEGER;
+    r : UNRESOLVED_sfixed)              -- fixed point input
+    return STD_ULOGIC is
+  begin
+    return (to_sfixed (l, r'high, r'low) ?> r);
+  end function "?>";
+
+  function "?<" (
+    l : INTEGER;
+    r : UNRESOLVED_sfixed)              -- fixed point input
+    return STD_ULOGIC is
+  begin
+    return (to_sfixed (l, r'high, r'low) ?< r);
+  end function "?<";
 
   function maximum (
     l : INTEGER;
@@ -4907,53 +4819,53 @@ package body fixed_generic_pkg is
     return (l < to_sfixed (r, l'high, l'low));
   end function "<";
 
---  function "?=" (
---    l : UNRESOLVED_sfixed;
---    r : REAL)
---    return STD_ULOGIC is
---  begin
---    return (l ?= to_sfixed (r, l'high, l'low));
---  end function "?=";
---
---  function "?/=" (
---    l : UNRESOLVED_sfixed;
---    r : REAL)
---    return STD_ULOGIC is
---  begin
---    return (l ?/= to_sfixed (r, l'high, l'low));
---  end function "?/=";
---
---  function "?>=" (
---    l : UNRESOLVED_sfixed;
---    r : REAL)
---    return STD_ULOGIC is
---  begin
---    return (l ?>= to_sfixed (r, l'high, l'low));
---  end function "?>=";
---
---  function "?<=" (
---    l : UNRESOLVED_sfixed;
---    r : REAL)
---    return STD_ULOGIC is
---  begin
---    return (l ?<= to_sfixed (r, l'high, l'low));
---  end function "?<=";
---
---  function "?>" (
---    l : UNRESOLVED_sfixed;
---    r : REAL)
---    return STD_ULOGIC is
---  begin
---    return (l ?> to_sfixed (r, l'high, l'low));
---  end function "?>";
---
---  function "?<" (
---    l : UNRESOLVED_sfixed;
---    r : REAL)
---    return STD_ULOGIC is
---  begin
---    return (l ?< to_sfixed (r, l'high, l'low));
---  end function "?<";
+  function "?=" (
+    l : UNRESOLVED_sfixed;
+    r : REAL)
+    return STD_ULOGIC is
+  begin
+    return (l ?= to_sfixed (r, l'high, l'low));
+  end function "?=";
+
+  function "?/=" (
+    l : UNRESOLVED_sfixed;
+    r : REAL)
+    return STD_ULOGIC is
+  begin
+    return (l ?/= to_sfixed (r, l'high, l'low));
+  end function "?/=";
+
+  function "?>=" (
+    l : UNRESOLVED_sfixed;
+    r : REAL)
+    return STD_ULOGIC is
+  begin
+    return (l ?>= to_sfixed (r, l'high, l'low));
+  end function "?>=";
+
+  function "?<=" (
+    l : UNRESOLVED_sfixed;
+    r : REAL)
+    return STD_ULOGIC is
+  begin
+    return (l ?<= to_sfixed (r, l'high, l'low));
+  end function "?<=";
+
+  function "?>" (
+    l : UNRESOLVED_sfixed;
+    r : REAL)
+    return STD_ULOGIC is
+  begin
+    return (l ?> to_sfixed (r, l'high, l'low));
+  end function "?>";
+
+  function "?<" (
+    l : UNRESOLVED_sfixed;
+    r : REAL)
+    return STD_ULOGIC is
+  begin
+    return (l ?< to_sfixed (r, l'high, l'low));
+  end function "?<";
 
   function maximum (
     l : UNRESOLVED_sfixed;
@@ -5020,53 +4932,53 @@ package body fixed_generic_pkg is
     return (to_sfixed (l, r'high, r'low) < r);
   end function "<";
 
---  function "?=" (
---    l : REAL;
---    r : UNRESOLVED_sfixed)              -- fixed point input
---    return STD_ULOGIC is
---  begin
---    return (to_sfixed (l, r'high, r'low) ?= r);
---  end function "?=";
---
---  function "?/=" (
---    l : REAL;
---    r : UNRESOLVED_sfixed)              -- fixed point input
---    return STD_ULOGIC is
---  begin
---    return (to_sfixed (l, r'high, r'low) ?/= r);
---  end function "?/=";
---
---  function "?>=" (
---    l : REAL;
---    r : UNRESOLVED_sfixed)              -- fixed point input
---    return STD_ULOGIC is
---  begin
---    return (to_sfixed (l, r'high, r'low) ?>= r);
---  end function "?>=";
---
---  function "?<=" (
---    l : REAL;
---    r : UNRESOLVED_sfixed)              -- fixed point input
---    return STD_ULOGIC is
---  begin
---    return (to_sfixed (l, r'high, r'low) ?<= r);
---  end function "?<=";
---
---  function "?>" (
---    l : REAL;
---    r : UNRESOLVED_sfixed)              -- fixed point input
---    return STD_ULOGIC is
---  begin
---    return (to_sfixed (l, r'high, r'low) ?> r);
---  end function "?>";
---
---  function "?<" (
---    l : REAL;
---    r : UNRESOLVED_sfixed)              -- fixed point input
---    return STD_ULOGIC is
---  begin
---    return (to_sfixed (l, r'high, r'low) ?< r);
---  end function "?<";
+  function "?=" (
+    l : REAL;
+    r : UNRESOLVED_sfixed)              -- fixed point input
+    return STD_ULOGIC is
+  begin
+    return (to_sfixed (l, r'high, r'low) ?= r);
+  end function "?=";
+
+  function "?/=" (
+    l : REAL;
+    r : UNRESOLVED_sfixed)              -- fixed point input
+    return STD_ULOGIC is
+  begin
+    return (to_sfixed (l, r'high, r'low) ?/= r);
+  end function "?/=";
+
+  function "?>=" (
+    l : REAL;
+    r : UNRESOLVED_sfixed)              -- fixed point input
+    return STD_ULOGIC is
+  begin
+    return (to_sfixed (l, r'high, r'low) ?>= r);
+  end function "?>=";
+
+  function "?<=" (
+    l : REAL;
+    r : UNRESOLVED_sfixed)              -- fixed point input
+    return STD_ULOGIC is
+  begin
+    return (to_sfixed (l, r'high, r'low) ?<= r);
+  end function "?<=";
+
+  function "?>" (
+    l : REAL;
+    r : UNRESOLVED_sfixed)              -- fixed point input
+    return STD_ULOGIC is
+  begin
+    return (to_sfixed (l, r'high, r'low) ?> r);
+  end function "?>";
+
+  function "?<" (
+    l : REAL;
+    r : UNRESOLVED_sfixed)              -- fixed point input
+    return STD_ULOGIC is
+  begin
+    return (to_sfixed (l, r'high, r'low) ?< r);
+  end function "?<";
 
   function maximum (
     l : REAL;
@@ -5368,29 +5280,29 @@ package body fixed_generic_pkg is
   end procedure READ;
 
   -- octal read and write
---  procedure owrite (
---    L         : inout LINE;               -- input line
---    VALUE     : in    UNRESOLVED_ufixed;  -- fixed point input
---    JUSTIFIED : in    SIDE  := right;
---    FIELD     : in    WIDTH := 0) is
---  begin  -- Example 03.30
---    write (L         => L,
---           VALUE     => to_ostring (VALUE),
---           JUSTIFIED => JUSTIFIED,
---           FIELD     => FIELD);
---  end procedure owrite;
---
---  procedure owrite (
---    L         : inout LINE;               -- input line
---    VALUE     : in    UNRESOLVED_sfixed;  -- fixed point input
---    JUSTIFIED : in    SIDE  := right;
---    FIELD     : in    WIDTH := 0) is
---  begin  -- Example 03.30
---    write (L         => L,
---           VALUE     => to_ostring (VALUE),
---           JUSTIFIED => JUSTIFIED,
---           FIELD     => FIELD);
---  end procedure owrite;
+  procedure owrite (
+    L         : inout LINE;               -- input line
+    VALUE     : in    UNRESOLVED_ufixed;  -- fixed point input
+    JUSTIFIED : in    SIDE  := right;
+    FIELD     : in    WIDTH := 0) is
+  begin  -- Example 03.30
+    write (L         => L,
+           VALUE     => to_ostring (VALUE),
+           JUSTIFIED => JUSTIFIED,
+           FIELD     => FIELD);
+  end procedure owrite;
+
+  procedure owrite (
+    L         : inout LINE;               -- input line
+    VALUE     : in    UNRESOLVED_sfixed;  -- fixed point input
+    JUSTIFIED : in    SIDE  := right;
+    FIELD     : in    WIDTH := 0) is
+  begin  -- Example 03.30
+    write (L         => L,
+           VALUE     => to_ostring (VALUE),
+           JUSTIFIED => JUSTIFIED,
+           FIELD     => FIELD);
+  end procedure owrite;
 
   -- Note that for Octal and Hex read, you can not start with a ".",
   -- the read is for numbers formatted "A.BC".  These routines go to
@@ -5536,12 +5448,12 @@ package body fixed_generic_pkg is
                    smath => false);
     if igood then                       -- We did not get another error
       if not ((i = -1) and               -- We read everything, and high bits 0
-              (or_reduce (slv(hbv-lbv downto VALUE'high+1-lbv)) = '0')) then
+              (or (slv(hbv-lbv downto VALUE'high+1-lbv)) = '0')) then
         report fixed_generic_pkg'instance_name
           & "OREAD(ufixed): Vector truncated."
           severity error;
       else
-        if (or_reduce (slv(VALUE'low-lbv-1 downto 0)) = '1') then
+        if (or (slv(VALUE'low-lbv-1 downto 0)) = '1') then
           assert NO_WARNING
             report fixed_generic_pkg'instance_name
             & "OREAD(ufixed): Vector truncated"
@@ -5573,7 +5485,7 @@ package body fixed_generic_pkg is
                    smath => false);
     if (igood and                   -- We did not get another error
         (i = -1) and                -- We read everything, and high bits 0
-        (or_reduce (slv(hbv-lbv downto VALUE'high+1-lbv)) = '0')) then
+        (or (slv(hbv-lbv downto VALUE'high+1-lbv)) = '0')) then
       valuex := to_ufixed (slv, hbv, lbv);
       VALUE  := valuex (VALUE'range);
       good := true;
@@ -5602,14 +5514,14 @@ package body fixed_generic_pkg is
     if igood then                       -- We did not get another error
       if not ((i = -1) and               -- We read everything
               ((slv(VALUE'high-lbv) = '0' and      -- sign bits = extra bits
-                or_reduce (slv(hbv-lbv downto VALUE'high+1-lbv)) = '0') or
+                or (slv(hbv-lbv downto VALUE'high+1-lbv)) = '0') or
                (slv(VALUE'high-lbv) = '1' and
-                and_reduce (slv(hbv-lbv downto VALUE'high+1-lbv)) = '1'))) then
+                and (slv(hbv-lbv downto VALUE'high+1-lbv)) = '1'))) then
         report fixed_generic_pkg'instance_name
           & "OREAD(sfixed): Vector truncated."
           severity error;
       else
-        if (or_reduce (slv(VALUE'low-lbv-1 downto 0)) = '1') then
+        if (or (slv(VALUE'low-lbv-1 downto 0)) = '1') then
           assert NO_WARNING
             report fixed_generic_pkg'instance_name
             & "OREAD(sfixed): Vector truncated"
@@ -5642,9 +5554,9 @@ package body fixed_generic_pkg is
     if (igood                       -- We did not get another error
         and (i = -1)                -- We read everything
         and ((slv(VALUE'high-lbv) = '0' and  -- sign bits = extra bits
-              or_reduce (slv(hbv-lbv downto VALUE'high+1-lbv)) = '0') or
+              or (slv(hbv-lbv downto VALUE'high+1-lbv)) = '0') or
              (slv(VALUE'high-lbv) = '1' and
-              and_reduce (slv(hbv-lbv downto VALUE'high+1-lbv)) = '1'))) then
+              and (slv(hbv-lbv downto VALUE'high+1-lbv)) = '1'))) then
       valuex := to_sfixed (slv, hbv, lbv);
       VALUE  := valuex (VALUE'range);
       good := true;
@@ -5654,30 +5566,30 @@ package body fixed_generic_pkg is
   end procedure OREAD;
 
   -- hex read and write
---  procedure hwrite (
---    L         : inout LINE;               -- input line
---    VALUE     : in    UNRESOLVED_ufixed;  -- fixed point input
---    JUSTIFIED : in    SIDE  := right;
---    FIELD     : in    WIDTH := 0) is
---  begin  -- Example 03.30
---    write (L         => L,
---           VALUE     => to_hstring (VALUE),
---           JUSTIFIED => JUSTIFIED,
---           FIELD     => FIELD);
---  end procedure hwrite;
---
---  -- purpose: writes fixed point into a line
---  procedure hwrite (
---    L         : inout LINE;               -- input line
---    VALUE     : in    UNRESOLVED_sfixed;  -- fixed point input
---    JUSTIFIED : in    SIDE  := right;
---    FIELD     : in    WIDTH := 0) is
---  begin  -- Example 03.30
---    write (L         => L,
---           VALUE     => to_hstring (VALUE),
---           JUSTIFIED => JUSTIFIED,
---           FIELD     => FIELD);
---  end procedure hwrite;
+  procedure hwrite (
+    L         : inout LINE;               -- input line
+    VALUE     : in    UNRESOLVED_ufixed;  -- fixed point input
+    JUSTIFIED : in    SIDE  := right;
+    FIELD     : in    WIDTH := 0) is
+  begin  -- Example 03.30
+    write (L         => L,
+           VALUE     => to_hstring (VALUE),
+           JUSTIFIED => JUSTIFIED,
+           FIELD     => FIELD);
+  end procedure hwrite;
+
+  -- purpose: writes fixed point into a line
+  procedure hwrite (
+    L         : inout LINE;               -- input line
+    VALUE     : in    UNRESOLVED_sfixed;  -- fixed point input
+    JUSTIFIED : in    SIDE  := right;
+    FIELD     : in    WIDTH := 0) is
+  begin  -- Example 03.30
+    write (L         => L,
+           VALUE     => to_hstring (VALUE),
+           JUSTIFIED => JUSTIFIED,
+           FIELD     => FIELD);
+  end procedure hwrite;
 
   -- Hex Read and Write procedures for STD_ULOGIC_VECTOR.
   -- Modified from the original to be more forgiving.
@@ -5828,12 +5740,12 @@ package body fixed_generic_pkg is
                    smath => false);
     if igood then
       if not ((i = -1) and               -- We read everything, and high bits 0
-              (or_reduce (slv(hbv-lbv downto VALUE'high+1-lbv)) = '0')) then
+              (or (slv(hbv-lbv downto VALUE'high+1-lbv)) = '0')) then
         report fixed_generic_pkg'instance_name
           & "HREAD(ufixed): Vector truncated."
           severity error;
       else
-        if (or_reduce (slv(VALUE'low-lbv-1 downto 0)) = '1') then
+        if (or (slv(VALUE'low-lbv-1 downto 0)) = '1') then
           assert NO_WARNING
             report fixed_generic_pkg'instance_name
             & "HREAD(ufixed): Vector truncated"
@@ -5865,7 +5777,7 @@ package body fixed_generic_pkg is
                    smath => false);
     if (igood and                   -- We did not get another error
         (i = -1) and                -- We read everything, and high bits 0
-        (or_reduce (slv(hbv-lbv downto VALUE'high+1-lbv)) = '0')) then
+        (or (slv(hbv-lbv downto VALUE'high+1-lbv)) = '0')) then
       valuex := to_ufixed (slv, hbv, lbv);
       VALUE  := valuex (VALUE'range);
       good := true;
@@ -5894,14 +5806,14 @@ package body fixed_generic_pkg is
     if igood then                       -- We did not get another error
       if not ((i = -1)                   -- We read everything
               and ((slv(VALUE'high-lbv) = '0' and  -- sign bits = extra bits
-                    or_reduce (slv(hbv-lbv downto VALUE'high+1-lbv)) = '0') or
+                    or (slv(hbv-lbv downto VALUE'high+1-lbv)) = '0') or
                    (slv(VALUE'high-lbv) = '1' and
-                    and_reduce (slv(hbv-lbv downto VALUE'high+1-lbv)) = '1'))) then
+                    and (slv(hbv-lbv downto VALUE'high+1-lbv)) = '1'))) then
         report fixed_generic_pkg'instance_name
           & "HREAD(sfixed): Vector truncated."
           severity error;
       else
-        if (or_reduce (slv(VALUE'low-lbv-1 downto 0)) = '1') then
+        if (or (slv(VALUE'low-lbv-1 downto 0)) = '1') then
           assert NO_WARNING
             report fixed_generic_pkg'instance_name
             & "HREAD(sfixed): Vector truncated"
@@ -5934,9 +5846,9 @@ package body fixed_generic_pkg is
     if (igood and                   -- We did not get another error
         (i = -1) and                -- We read everything
         ((slv(VALUE'high-lbv) = '0' and  -- sign bits = extra bits
-          or_reduce (slv(hbv-lbv downto VALUE'high+1-lbv)) = '0') or
+          or (slv(hbv-lbv downto VALUE'high+1-lbv)) = '0') or
          (slv(VALUE'high-lbv) = '1' and
-          and_reduce (slv(hbv-lbv downto VALUE'high+1-lbv)) = '1'))) then
+          and (slv(hbv-lbv downto VALUE'high+1-lbv)) = '1'))) then
       valuex := to_sfixed (slv, hbv, lbv);
       VALUE  := valuex (VALUE'range);
       good := true;
@@ -5957,8 +5869,7 @@ package body fixed_generic_pkg is
     else
       if value'high < 0 then
         if value(value'high) = 'Z' then
-          --return to_string (resize (sfixed(value), 0, value'low));
-          return "";
+          return to_string (resize (sfixed(value), 0, value'low));
         else
           return to_string (resize (value, 0, value'low));
         end if;
@@ -6018,151 +5929,151 @@ package body fixed_generic_pkg is
     end if;
   end function to_string;
 
---  function to_ostring (value : UNRESOLVED_ufixed) return STRING is
---    constant lne  : INTEGER := (-VALUE'low+2)/3;
---    variable subval : UNRESOLVED_ufixed (value'high downto -3);
---    variable lpad : STD_ULOGIC_VECTOR (0 to (lne*3 + VALUE'low) -1);
---    variable slv : STD_ULOGIC_VECTOR (value'length-1 downto 0);
---  begin
---    if value'length < 1 then
---      return NUS;
---    else
---      if value'high < 0 then
---        if value(value'high) = 'Z' then
---          return to_ostring (resize (sfixed(value), 2, value'low));
---        else
---          return to_ostring (resize (value, 2, value'low));
---        end if;
---      elsif value'low >= 0 then
---        if Is_X (value(value'low)) then
---          subval := (others => value(value'low));
---          subval (value'range) := value;
---          return to_ostring(subval);
---        else
---          return to_ostring (resize (value, value'high, -3));
---        end if;
---      else
---        slv := to_sulv (value);
---        if Is_X (value (value'low)) then
---          lpad := (others => value (value'low));
---        else
---          lpad := (others => '0');
---        end if;
---        return to_ostring(slv(slv'high downto slv'high-VALUE'high))
---          & "."
---          & to_ostring(slv(slv'high-VALUE'high-1 downto 0) & lpad);
---      end if;
---    end if;
---  end function to_ostring;
---
---  function to_hstring (value : UNRESOLVED_ufixed) return STRING is
---    constant lne  : INTEGER := (-VALUE'low+3)/4;
---    variable subval : UNRESOLVED_ufixed (value'high downto -4);
---    variable lpad : STD_ULOGIC_VECTOR (0 to (lne*4 + VALUE'low) -1);
---    variable slv : STD_ULOGIC_VECTOR (value'length-1 downto 0);
---  begin
---    if value'length < 1 then
---      return NUS;
---    else
---      if value'high < 0 then
---        if value(value'high) = 'Z' then
---          return to_hstring (resize (sfixed(value), 3, value'low));
---        else
---          return to_hstring (resize (value, 3, value'low));
---        end if;
---      elsif value'low >= 0 then
---        if Is_X (value(value'low)) then
---          subval := (others => value(value'low));
---          subval (value'range) := value;
---          return to_hstring(subval);
---        else
---          return to_hstring (resize (value, value'high, -4));
---        end if;
---      else
---        slv := to_sulv (value);
---        if Is_X (value (value'low)) then
---          lpad := (others => value(value'low));
---        else
---          lpad := (others => '0');
---        end if;
---        return to_hstring(slv(slv'high downto slv'high-VALUE'high))
---          & "."
---          & to_hstring(slv(slv'high-VALUE'high-1 downto 0)&lpad);
---      end if;
---    end if;
---  end function to_hstring;
---
---  function to_ostring (value : UNRESOLVED_sfixed) return STRING is
---    constant ne   : INTEGER := ((value'high+1)+2)/3;
---    variable pad  : STD_ULOGIC_VECTOR(0 to (ne*3 - (value'high+1)) - 1);
---    constant lne  : INTEGER := (-VALUE'low+2)/3;
---    variable subval : UNRESOLVED_sfixed (value'high downto -3);
---    variable lpad : STD_ULOGIC_VECTOR (0 to (lne*3 + VALUE'low) -1);
---    variable slv  : STD_ULOGIC_VECTOR (VALUE'high - VALUE'low downto 0);
---  begin
---    if value'length < 1 then
---      return NUS;
---    else
---      if value'high < 0 then
---        return to_ostring (resize (value, 2, value'low));
---      elsif value'low >= 0 then
---        if Is_X (value(value'low)) then
---          subval := (others => value(value'low));
---          subval (value'range) := value;
---          return to_ostring(subval);
---        else
---          return to_ostring (resize (value, value'high, -3));
---        end if;
---      else
---        pad := (others => value(value'high));
---        slv := to_sulv (value);
---        if Is_X (value (value'low)) then
---          lpad := (others => value(value'low));
---        else
---          lpad := (others => '0');
---        end if;
---        return to_ostring(pad & slv(slv'high downto slv'high-VALUE'high))
---          & "."
---          & to_ostring(slv(slv'high-VALUE'high-1 downto 0) & lpad);
---      end if;
---    end if;
---  end function to_ostring;
---
---  function to_hstring (value : UNRESOLVED_sfixed) return STRING is
---    constant ne   : INTEGER := ((value'high+1)+3)/4;
---    variable pad  : STD_ULOGIC_VECTOR(0 to (ne*4 - (value'high+1)) - 1);
---    constant lne  : INTEGER := (-VALUE'low+3)/4;
---    variable subval : UNRESOLVED_sfixed (value'high downto -4);
---    variable lpad : STD_ULOGIC_VECTOR (0 to (lne*4 + VALUE'low) -1);
---    variable slv  : STD_ULOGIC_VECTOR (value'length-1 downto 0);
---  begin
---    if value'length < 1 then
---      return NUS;
---    else
---      if value'high < 0 then
---        return to_hstring (resize (value, 3, value'low));
---      elsif value'low >= 0 then
---        if Is_X (value(value'low)) then
---          subval := (others => value(value'low));
---          subval (value'range) := value;
---          return to_hstring(subval);
---        else
---          return to_hstring (resize (value, value'high, -4));
---        end if;
---      else
---        slv := to_sulv (value);
---        pad := (others => value(value'high));
---        if Is_X (value (value'low)) then
---          lpad := (others => value(value'low));
---        else
---          lpad := (others => '0');
---        end if;
---        return to_hstring(pad & slv(slv'high downto slv'high-VALUE'high))
---          & "."
---          & to_hstring(slv(slv'high-VALUE'high-1 downto 0) & lpad);
---      end if;
---    end if;
---  end function to_hstring;
+  function to_ostring (value : UNRESOLVED_ufixed) return STRING is
+    constant lne  : INTEGER := (-VALUE'low+2)/3;
+    variable subval : UNRESOLVED_ufixed (value'high downto -3);
+    variable lpad : STD_ULOGIC_VECTOR (0 to (lne*3 + VALUE'low) -1);
+    variable slv : STD_ULOGIC_VECTOR (value'length-1 downto 0);
+  begin
+    if value'length < 1 then
+      return NUS;
+    else
+      if value'high < 0 then
+        if value(value'high) = 'Z' then
+          return to_ostring (resize (sfixed(value), 2, value'low));
+        else
+          return to_ostring (resize (value, 2, value'low));
+        end if;
+      elsif value'low >= 0 then
+        if Is_X (value(value'low)) then
+          subval := (others => value(value'low));
+          subval (value'range) := value;
+          return to_ostring(subval);
+        else
+          return to_ostring (resize (value, value'high, -3));
+        end if;
+      else
+        slv := to_sulv (value);
+        if Is_X (value (value'low)) then
+          lpad := (others => value (value'low));
+        else
+          lpad := (others => '0');
+        end if;
+        return to_ostring(slv(slv'high downto slv'high-VALUE'high))
+          & "."
+          & to_ostring(slv(slv'high-VALUE'high-1 downto 0) & lpad);
+      end if;
+    end if;
+  end function to_ostring;
+
+  function to_hstring (value : UNRESOLVED_ufixed) return STRING is
+    constant lne  : INTEGER := (-VALUE'low+3)/4;
+    variable subval : UNRESOLVED_ufixed (value'high downto -4);
+    variable lpad : STD_ULOGIC_VECTOR (0 to (lne*4 + VALUE'low) -1);
+    variable slv : STD_ULOGIC_VECTOR (value'length-1 downto 0);
+  begin
+    if value'length < 1 then
+      return NUS;
+    else
+      if value'high < 0 then
+        if value(value'high) = 'Z' then
+          return to_hstring (resize (sfixed(value), 3, value'low));
+        else
+          return to_hstring (resize (value, 3, value'low));
+        end if;
+      elsif value'low >= 0 then
+        if Is_X (value(value'low)) then
+          subval := (others => value(value'low));
+          subval (value'range) := value;
+          return to_hstring(subval);
+        else
+          return to_hstring (resize (value, value'high, -4));
+        end if;
+      else
+        slv := to_sulv (value);
+        if Is_X (value (value'low)) then
+          lpad := (others => value(value'low));
+        else
+          lpad := (others => '0');
+        end if;
+        return to_hstring(slv(slv'high downto slv'high-VALUE'high))
+          & "."
+          & to_hstring(slv(slv'high-VALUE'high-1 downto 0)&lpad);
+      end if;
+    end if;
+  end function to_hstring;
+
+  function to_ostring (value : UNRESOLVED_sfixed) return STRING is
+    constant ne   : INTEGER := ((value'high+1)+2)/3;
+    variable pad  : STD_ULOGIC_VECTOR(0 to (ne*3 - (value'high+1)) - 1);
+    constant lne  : INTEGER := (-VALUE'low+2)/3;
+    variable subval : UNRESOLVED_sfixed (value'high downto -3);
+    variable lpad : STD_ULOGIC_VECTOR (0 to (lne*3 + VALUE'low) -1);
+    variable slv  : STD_ULOGIC_VECTOR (VALUE'high - VALUE'low downto 0);
+  begin
+    if value'length < 1 then
+      return NUS;
+    else
+      if value'high < 0 then
+        return to_ostring (resize (value, 2, value'low));
+      elsif value'low >= 0 then
+        if Is_X (value(value'low)) then
+          subval := (others => value(value'low));
+          subval (value'range) := value;
+          return to_ostring(subval);
+        else
+          return to_ostring (resize (value, value'high, -3));
+        end if;
+      else
+        pad := (others => value(value'high));
+        slv := to_sulv (value);
+        if Is_X (value (value'low)) then
+          lpad := (others => value(value'low));
+        else
+          lpad := (others => '0');
+        end if;
+        return to_ostring(pad & slv(slv'high downto slv'high-VALUE'high))
+          & "."
+          & to_ostring(slv(slv'high-VALUE'high-1 downto 0) & lpad);
+      end if;
+    end if;
+  end function to_ostring;
+
+  function to_hstring (value : UNRESOLVED_sfixed) return STRING is
+    constant ne   : INTEGER := ((value'high+1)+3)/4;
+    variable pad  : STD_ULOGIC_VECTOR(0 to (ne*4 - (value'high+1)) - 1);
+    constant lne  : INTEGER := (-VALUE'low+3)/4;
+    variable subval : UNRESOLVED_sfixed (value'high downto -4);
+    variable lpad : STD_ULOGIC_VECTOR (0 to (lne*4 + VALUE'low) -1);
+    variable slv  : STD_ULOGIC_VECTOR (value'length-1 downto 0);
+  begin
+    if value'length < 1 then
+      return NUS;
+    else
+      if value'high < 0 then
+        return to_hstring (resize (value, 3, value'low));
+      elsif value'low >= 0 then
+        if Is_X (value(value'low)) then
+          subval := (others => value(value'low));
+          subval (value'range) := value;
+          return to_hstring(subval);
+        else
+          return to_hstring (resize (value, value'high, -4));
+        end if;
+      else
+        slv := to_sulv (value);
+        pad := (others => value(value'high));
+        if Is_X (value (value'low)) then
+          lpad := (others => value(value'low));
+        else
+          lpad := (others => '0');
+        end if;
+        return to_hstring(pad & slv(slv'high downto slv'high-VALUE'high))
+          & "."
+          & to_hstring(slv(slv'high-VALUE'high-1 downto 0) & lpad);
+      end if;
+    end if;
+  end function to_hstring;
 
   -- From string functions allow you to convert a string into a fixed
   -- point number.  Example:
