@@ -54,6 +54,7 @@ architecture RTL of RingOscMeta is
 
   signal clk_cnt, clk_debounce, clk_ring, pll_locked : std_logic;
   signal clk_ringosc : std_logic;
+  signal clk_ringosc_sync : std_logic_vector(3 downto 0);
   signal ring_state : std_logic_vector(leds'range);
   signal ring_cnt   : unsigned(19 downto 0);
   signal ring_input : std_logic;
@@ -81,14 +82,17 @@ begin
     );
 
   count : process (rst, clk_cnt)
+    constant sync_amount : integer := 0;
   begin
     if rst = '0' then
       previous <= '1';
       bcd_counter <= (0 => "0010", 1 => "0100", others => (others => '0'));
       bcd_counter_low <= (others => '0');
+      clk_ringosc_sync(clk_ringosc_sync'left downto 1) <= (others => '0');
     elsif rising_edge(clk_cnt) then
-      previous <= clk_ringosc;
-      if previous /= clk_ringosc then
+      clk_ringosc_sync(clk_ringosc_sync'left downto 1) <= clk_ringosc_sync(clk_ringosc_sync'left-1 downto 0);
+      previous <= clk_ringosc_sync(sync_amount);
+      if previous /= clk_ringosc_sync(sync_amount) then
         bcd_counter_low <= bcd_counter_low + 1;
         if bcd_counter_low(bcd_counter_low'left) = '1' then
           bcd_counter_low <= (others => '0');
@@ -98,6 +102,8 @@ begin
       end if;
     end if;
   end process;
+  
+  clk_ringosc_sync(0) <= clk_ringosc;
   
   bcd_to_digits : process (bcd_counter)
     constant to_digit : sevenseg_digits(0 to 15) := (
@@ -136,5 +142,5 @@ begin
     end if;
   end process;
   --ring_input <= clk_ringosc;
-  leds <= ring_state and "111111111111";
+  leds <= ring_state or "111111111111";
 end architecture;
