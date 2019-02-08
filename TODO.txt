@@ -20,7 +20,7 @@ DONE 15: Schematic design with simple logic
   - DIP-Switch -> LED
   - mode: present&repeat
   - learnt: usage of Synthesis, Pin Assignment, Netlist Viewer
-TODO 16: Simple extension task
+DONE 16: Simple extension task
   - User should add a simple extension to the schematic.
   - What would be a good task?
   - I can probably just let them play with it.
@@ -48,6 +48,10 @@ TODO 65: Simulation mit ModelSim
   - Design mit blinkender LED und LED-Anzeigen - dann kann man sich beides ansehen.
   - Testbench only provides clocks.
   - mode: present&repeat
+
+DONE 80: Debounce
+
+DONE 90: Many debounce and counter
 
 
 Presentation
