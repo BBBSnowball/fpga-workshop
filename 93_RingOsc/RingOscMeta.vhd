@@ -22,7 +22,6 @@ architecture RTL of RingOscMeta is
 
   signal clk_ring, pll_locked : std_logic;
   signal clk_ringosc : std_logic;
-  signal clk_ringosc_div : std_logic_vector(9 downto 0);
   signal ring_state : std_logic_vector(leds'range);
   signal ring_cnt   : unsigned(19 downto 0);
   signal ring_input : std_logic;
@@ -38,28 +37,6 @@ begin
   
   ringosc_inst : entity work.ringosc
     port map (clk => clk_ringosc);
-
-  --clk_ringosc_div(0) <= clk_ringosc;
-
-  --div : for i in 1 to clk_ringosc_div'left generate
-  --  process(rst, clk_ringosc_div)
-  --  begin
-  --    if rst = '0' then
-  --      clk_ringosc_div(i) <= '0';
-  --    elsif rising_edge(clk_ringosc_div(i-1)) then
-  --      clk_ringosc_div(i) <= not(clk_ringosc_div(i));
-  --    end if;
-  --  end process;
-  --end generate;
-  
-  div : process(clk_ringosc)
-  begin
-    if rst = '0' then
-      clk_ringosc_div <= (others => '0');
-    elsif rising_edge(clk_ringosc) then
-      clk_ringosc_div <= std_logic_vector(unsigned(clk_ringosc_div) + 1);
-    end if;
-  end process;
 
   ring : process(rst, pll_locked, clk_ring)
   begin
@@ -83,7 +60,7 @@ begin
   end process;
   leds <= ring_state;
 
-  --ring_input <= input or clk_ringosc_div(5);
+  --ring_input <= input;
   ring_input <= input or clk_ringosc;
   ring_input2 <= ring_input;
   --ring_input2 <= ring_sync1;
