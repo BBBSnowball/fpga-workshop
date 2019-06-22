@@ -29,21 +29,22 @@ DONE 40: Same logic in VHDL
   - present&repeat
   - test project is also SimpleSchematic
 
-TODO 45: Simple extension task (again; this time in VHDL)
+WONTFIX 45: Simple extension task (again; this time in VHDL)
   - Should be a different task.
+  - User can decide.
 
 DONE 55: LED blink
   - As simple as possible. The design I made together with Manuel should be fine.
   - mode: present&repeat
   - test project is also SimpleSchematic
 
-TODO 60: Design mit mehreren Modulen
+DONE 60: Design mit mehreren Modulen
   (gelernt: modulares Design in VHDL)
   - Modul für Ansteuerung von LED-Anzeigen zur Verfügung stellen und muss nur eingebaut werden. Eventuell mit ein paar Generics, wenn sinnvoll.
   - Anzeigewert statisch oder mit DIP-Switch beeinflussbar schreibt jeder selbst.
   - mode: present&repeat
 
-TODO 65: Simulation mit ModelSim
+DONE 65: Simulation mit ModelSim
   (gelernt: VHDL Testbench, Bedienung von ModelSim)
   - Design mit blinkender LED und LED-Anzeigen - dann kann man sich beides ansehen.
   - Testbench only provides clocks.
@@ -57,11 +58,11 @@ DONE 90: Many debounce and counter
 Presentation
 ============
 
-TODO find a good tool, e.g. Markdown->HTML or LaTeX
+DONE find a good tool, e.g. Markdown->HTML or LaTeX
 
-TODO 05: grobe Einordnung von FPGA zwischen MCU und ASIC
+DONE 05: grobe Einordnung von FPGA zwischen MCU und ASIC
 
-TODO 10: sehr kurze Einführung in boolsche Logik, d.h. AND, OR, etc.
+DONE 10: sehr kurze Einführung in boolsche Logik, d.h. AND, OR, etc.
   - Wahrheitstabelle von AND, OR, NOT
   - Wahrheitstabelle von Addierer im Zehnersystem:
     - Aufgabe: Addierer für einstellige Zahlen / Ziffern
@@ -71,16 +72,16 @@ TODO 10: sehr kurze Einführung in boolsche Logik, d.h. AND, OR, etc.
   - Addierer kombinieren - analog zu schriftlichem Addieren
   - Addierer binär zeigen, ggf gemeinsam entwickeln
 
-TODO 20: Wie wird Logik im FPGA umgesetzt?
+DONE 20: Wie wird Logik im FPGA umgesetzt?
   - Explain LUTs. That's probably it.
 
-TODO 30: Kombinatorische Logik mit VHDL, kurzer Vortrag dann selbst umsetzen
+DONE 30: Kombinatorische Logik mit VHDL, kurzer Vortrag dann selbst umsetzen
   - learnt: VHDL basics
 
-TODO 35: Cheat-Sheet für VHDL schreiben oder finden
+DONE 35: Cheat-Sheet für VHDL schreiben oder finden
   - Should contain a suitable template of an entity and architecture.
 
-TODO 50: Erklärung von FPGA anhand von kombinatorische Logik und LED (langsam) blinken lassen
+DONE 50: Erklärung von FPGA anhand von kombinatorische Logik und LED (langsam) blinken lassen
   (gelernt: Register-Transfer-Logik, Signal-Tap (Logic Analyzer))
   - gemeinsam RTL-Schematic anschauen und verstehen (Was tut er? Takt. Warum ist das mit dem Takt nötig?)
   - in VHDL hinschreiben
