@@ -1,0 +1,143 @@
+# -------------------------------------------------------------------------- #
+#
+# Copyright (C) 1991-2013 Altera Corporation
+# Your use of Altera Corporation's design tools, logic functions 
+# and other software and tools, and its AMPP partner logic 
+# functions, and any output files from any of the foregoing 
+# (including device programming or simulation files), and any 
+# associated documentation or information are expressly subject 
+# to the terms and conditions of the Altera Program License 
+# Subscription Agreement, Altera MegaCore Function License 
+# Agreement, or other applicable license agreement, including, 
+# without limitation, that your use is for the sole purpose of 
+# programming logic devices manufactured by Altera and sold by 
+# Altera or its authorized distributors.  Please refer to the 
+# applicable agreement for further details.
+#
+# -------------------------------------------------------------------------- #
+#
+# Quartus II 32-bit
+# Version 13.0.1 Build 232 06/12/2013 Service Pack 1 SJ Web Edition
+# Date created = 01:09:27  November 01, 2018
+#
+# -------------------------------------------------------------------------- #
+#
+# Notes:
+#
+# 1) The default values for assignments are stored in the file:
+#		SoftCore_assignment_defaults.qdf
+#    If this file doesn't exist, see file:
+#		assignment_defaults.qdf
+#
+# 2) Altera recommends that you do not modify this file. This
+#    file is updated automatically by the Quartus II software
+#    and any changes you make may be lost or overwritten.
+#
+# -------------------------------------------------------------------------- #
+
+
+set_global_assignment -name FAMILY "Cyclone IV E"
+set_global_assignment -name DEVICE EP4CE6E22C8
+set_global_assignment -name TOP_LEVEL_ENTITY softcore_top
+set_global_assignment -name ORIGINAL_QUARTUS_VERSION "13.0 SP1"
+set_global_assignment -name PROJECT_CREATION_TIME_DATE "01:09:27  NOVEMBER 01, 2018"
+set_global_assignment -name LAST_QUARTUS_VERSION "13.0 SP1"
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
+set_global_assignment -name DEVICE_FILTER_SPEED_GRADE 8
+set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 1
+set_global_assignment -name NOMINAL_CORE_SUPPLY_VOLTAGE 1.2V
+set_global_assignment -name EDA_SIMULATION_TOOL "ModelSim-Altera (VHDL)"
+set_global_assignment -name EDA_OUTPUT_DATA_FORMAT VHDL -section_id eda_simulation
+set_global_assignment -name SDC_FILE timing.sdc
+set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to clk
+set_location_assignment PIN_23 -to clk
+set_location_assignment PIN_90 -to buttons[2]
+set_location_assignment PIN_91 -to buttons[3]
+set_location_assignment PIN_87 -to buttons[4]
+set_location_assignment PIN_86 -to buttons[5]
+set_location_assignment PIN_138 -to sevenseg_digit[7]
+set_location_assignment PIN_137 -to sevenseg_digit[6]
+set_location_assignment PIN_136 -to sevenseg_digit[5]
+set_location_assignment PIN_135 -to sevenseg_digit[4]
+set_location_assignment PIN_133 -to sevenseg_digit[3]
+set_location_assignment PIN_132 -to sevenseg_digit[2]
+set_location_assignment PIN_129 -to sevenseg_digit[1]
+set_location_assignment PIN_128 -to sevenseg_digit[0]
+set_location_assignment PIN_115 -to sevenseg_segment[7]
+set_location_assignment PIN_119 -to sevenseg_segment[6]
+set_location_assignment PIN_120 -to sevenseg_segment[5]
+set_location_assignment PIN_121 -to sevenseg_segment[4]
+set_location_assignment PIN_124 -to sevenseg_segment[3]
+set_location_assignment PIN_125 -to sevenseg_segment[2]
+set_location_assignment PIN_126 -to sevenseg_segment[1]
+set_location_assignment PIN_127 -to sevenseg_segment[0]
+set_location_assignment PIN_58 -to switches[1]
+set_location_assignment PIN_59 -to switches[2]
+set_location_assignment PIN_60 -to switches[3]
+set_location_assignment PIN_64 -to switches[4]
+set_location_assignment PIN_65 -to switches[5]
+set_location_assignment PIN_66 -to switches[6]
+set_location_assignment PIN_67 -to switches[7]
+set_location_assignment PIN_68 -to switches[8]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to buttons[2]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to buttons[3]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to buttons[4]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to buttons[5]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to sevenseg_digit[7]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to sevenseg_digit[6]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to sevenseg_digit[5]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to sevenseg_digit[4]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to sevenseg_digit[3]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to sevenseg_digit[2]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to sevenseg_digit[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to sevenseg_digit[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to sevenseg_segment[7]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to sevenseg_segment[6]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to sevenseg_segment[5]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to sevenseg_segment[4]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to sevenseg_segment[3]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to sevenseg_segment[2]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to sevenseg_segment[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to sevenseg_segment[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to switches[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to switches[2]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to switches[3]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to switches[4]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to switches[5]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to switches[6]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to switches[7]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to switches[8]
+set_global_assignment -name VHDL_FILE sevenseg.vhd
+
+set_global_assignment -name VHDL_FILE softcore_top.vhd
+set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
+set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to sevenseg_digit[7]
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to sevenseg_digit[6]
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to sevenseg_digit[5]
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to sevenseg_digit[4]
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to sevenseg_digit[3]
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to sevenseg_digit[2]
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to sevenseg_digit[1]
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to sevenseg_digit[0]
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to sevenseg_segment[7]
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to sevenseg_segment[6]
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to sevenseg_segment[5]
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to sevenseg_segment[4]
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to sevenseg_segment[3]
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to sevenseg_segment[2]
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to sevenseg_segment[1]
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to sevenseg_segment[0]
+set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
+set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
+set_global_assignment -name ENABLE_SIGNALTAP OFF
+set_global_assignment -name USE_SIGNALTAP_FILE signaltap.stp
+set_global_assignment -name SIGNALTAP_FILE signaltap.stp
+set_global_assignment -name SLD_FILE "/home/user/c3pb/fpga-workshop/60_SoftCore/signaltap_auto_stripped.stp"
+
+set_global_assignment -name QIP_FILE softcore/synthesis/softcore.qip
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

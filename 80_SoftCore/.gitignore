@@ -1,0 +1,14 @@
+/pll/
+/pll_*.rpt
+/PLLJ_PLLSPE_INFO.txt
+/pll.bsf
+/pll.cmp
+/pll.html
+/pll.sopcinfo
+/.qsys_edit/
+/softcore/
+/softcore.bsf
+/softcore.cmp
+/softcore.html
+/softcore.sopcinfo
+/softcore_generation.rpt
