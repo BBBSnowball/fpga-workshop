@@ -1,3 +1,4 @@
+catch {vlib work}
 vcom msim.vhd
 vsim work.msim_test
 add wave /msim_test/clk /msim_test/stopclk
