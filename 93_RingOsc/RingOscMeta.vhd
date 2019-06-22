@@ -22,8 +22,6 @@ architecture RTL of RingOscMeta is
 
   signal clk_ring, pll_locked : std_logic;
   signal clk_ringosc : std_logic;
-  signal ring_input : std_logic;
-  signal ring_sync1, ring_sync2 : std_logic;
 begin
   u0 : pll
       port map (
@@ -36,29 +34,17 @@ begin
   ringosc_inst : entity work.ringosc
     port map (clk => clk_ringosc);
 
-  ring : entity work.ring
+  ring : entity work.ring2
+    generic map (
+      sel_input => 1,
+      sel_sync  => 0
+    )
     port map (
-      clk_ring   => clk_ring,
-      rst        => rst,
-      pll_locked => pll_locked,
-      leds       => leds,
-
-      input => ring_input
-      --input => ring_sync1
-      --input => ring_sync2
+      clk_ring    => clk_ring,
+      clk_ringosc => clk_ringosc,
+      rst         => rst,
+      pll_locked  => pll_locked,
+      input       => input,
+      leds        => leds
     );
-
-  --ring_input <= input;
-  ring_input <= input or clk_ringosc;
-  
-  sync : process(rst, pll_locked, clk_ring)
-  begin
-    if rst = '0' or pll_locked = '0' then
-      ring_sync1 <= '0';
-      ring_sync2 <= '0';
-    elsif rising_edge(clk_ring) then
-      ring_sync1 <= ring_input;
-      ring_sync2 <= ring_sync1;
-    end if;
-  end process;
 end architecture;
