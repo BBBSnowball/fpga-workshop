@@ -35,3 +35,23 @@ Troubleshooting
 ---------------
 
 - Unter Linux: Eventuell müsst ihr ggf noch 32-bit Bibliotheken installieren - ggf. in passender Version. Ich habe mein Hilfsskript mal nach ../modelsim-patch gelegt. Eventuell hilft das jemandem weiter.
+
+
+Test 3
+======
+
+Anleitung
+---------
+
+1. Quartus starten
+2. NIOS II Tools starten (Tools -> NIOS II Software Build Tools for Eclipse)
+
+Troubleshooting
+---------------
+
+- Die Executable dazu ist: /path/to/quartus/nios2eds/bin/eclipse-nios2
+- Logs sind in: ~/.altera.sbt4e/configuration/*.log
+- Bei mir fehlte (allerdings bei Quartus 13) libgtk-x11-2.0.so.0.
+  Das ist gtk2.i686 bei Fedora 23. Die Libary, die das braucht, ist diese hier:
+  `~/.altera.sbt4e/configuration/org.eclipse.osgi/bundles/271/1/.cp/libswt-pi-gtk-3740.so`
+
