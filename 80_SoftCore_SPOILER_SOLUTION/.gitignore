@@ -12,3 +12,15 @@
 /softcore.html
 /softcore.sopcinfo
 /softcore_generation*.rpt
+/software/*/obj/
+/software/*/*.elf
+/software/*/*.map
+/software/*/*.objdump
+/software/*/mem_init/
+/software/*_bsp/drivers/
+/software/*_bsp/HAL/
+/software/*_bsp/*
+!/software/*_bsp/.project
+!/software/*_bsp/.cproject
+!/software/*_bsp/create-this-bsp
+!/software/*_bsp/settings.bsp
