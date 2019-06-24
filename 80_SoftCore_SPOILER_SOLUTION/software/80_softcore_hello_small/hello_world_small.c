@@ -80,6 +80,7 @@
 
 #include "sys/alt_stdio.h"
 #include "sys/alt_sys_wrappers.h"
+#include "sys/alt_driver.h"
 #include "system.h"
 #include "altera_avalon_pio_regs.h"
 #include <stdint.h>
@@ -90,7 +91,7 @@ int main()
 
   /* Event loop never exits. */
   uint32_t a = 0x1, b = 0x0;
-  uint16_t leds = 0x1;
+  uint32_t leds = 0x1;
   while (1) {
 	  IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, a);
 	  IOWR_ALTERA_AVALON_PIO_DATA(PIO_1_BASE, b);
@@ -102,6 +103,10 @@ int main()
 	  leds = ~leds;
 
 	  alt_putstr(".");
+
+	  // This didn't work for me.
+	  ALT_DRIVER_WRITE_EXTERNS(uart_0);
+	  ALT_DRIVER_WRITE(uart_0, "x", 1, 0);
 
 	  usleep(1000000);
   }
